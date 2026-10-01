@@ -20,6 +20,7 @@ export function makeTextLayer({
   letterSpacing = 0,
   widthVariant = null, // null = usar el valor por defecto según el rol (ver computeFont); si no, ver FONT_WIDTH_VARIANTS
   weight = null, // null = usar el peso por defecto según el rol/negrita
+  slot = null, // papel fijo dentro de una plantilla (p.ej. 'mainTitle' / 'subtitle' del artículo)
 } = {}) {
   return {
     id: nextId('text'),
@@ -41,6 +42,7 @@ export function makeTextLayer({
     letterSpacing,
     widthVariant,
     weight,
+    slot,
   };
 }
 

@@ -74,23 +74,38 @@ function repostShared() {
   };
 }
 
-// 3) Artículo (plantilla fija): título + portada + cuerpo autoajustable + hueco enlace + logos
+// 3) Artículo (plantilla fija): título principal + subtítulo (desactivable) +
+//    portada + cuerpo autoajustable + hueco enlace + logos
+export const ARTICLE_TITLE_Y = 80;
+export const ARTICLE_SUBTITLE_GAP = 12;
 function articleFixed() {
-  const coverY = 300;
-  const coverH = 760;
+  const titleH = 170;
+  const subtitleY = ARTICLE_TITLE_Y + titleH + ARTICLE_SUBTITLE_GAP;
+  const subtitleH = 110;
+  const coverY = subtitleY + subtitleH + 28;
+  const coverH = 690;
   return {
     canvas: { width: CANVAS_W, height: CANVAS_H },
     templateName: 'Artículo (fija)',
+    // al cambiar la estructura de esta plantilla se sube la versión para que
+    // los espacios de trabajo guardados con la estructura vieja se descarten
+    templateVersion: 2,
     layers: [
       makeBackgroundLayer({
         name: 'Fondo', x: 0, y: 0, width: CANVAS_W, height: CANVAS_H, color: '#ffffff',
         exportable: true,
       }),
       makeTextLayer({
-        name: 'Título', role: 'title',
+        name: 'Título principal', role: 'title', slot: 'mainTitle',
         text: 'Titular del artículo',
-        x: MARGIN, y: 90, width: CANVAS_W - MARGIN * 2, height: 190,
+        x: MARGIN, y: ARTICLE_TITLE_Y, width: CANVAS_W - MARGIN * 2, height: titleH,
         color: COLORS.black, autoFit: true,
+      }),
+      makeTextLayer({
+        name: 'Subtítulo', role: 'body', slot: 'subtitle',
+        text: 'Subtítulo que amplía o matiza el titular',
+        x: MARGIN, y: subtitleY, width: CANVAS_W - MARGIN * 2, height: subtitleH,
+        color: COLORS.black, autoFit: true, bold: true,
       }),
       makeImageLayer({
         name: 'Portada', x: MARGIN, y: coverY, width: CANVAS_W - MARGIN * 2, height: coverH,

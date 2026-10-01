@@ -101,6 +101,7 @@ export function loadDocument(doc) {
     selectedId: null,
     templateName: doc.templateName || null,
     quickGenerator: doc.quickGenerator || null,
+    templateVersion: doc.templateVersion || 1,
   });
   notify();
 }
@@ -111,6 +112,7 @@ export function serializeDocument() {
     layers: state.layers,
     templateName: state.templateName,
     quickGenerator: state.quickGenerator || null,
+    templateVersion: state.templateVersion || 1,
   });
 }
 

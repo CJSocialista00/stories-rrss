@@ -1,4 +1,5 @@
 import { getLayer, updateLayer, removeLayer, getState } from '../engine/state.js';
+import { ARTICLE_SUBTITLE_GAP } from '../templates/builtins.js';
 import { COLORS, ASPECT_PRESETS, CANVAS_W, CANVAS_H, FONT_WIDTH_VARIANTS, FONT_WEIGHT_VARIANTS } from '../engine/constants.js';
 import { LOGO_KINDS, logoKindOf, PIN_VARIANTS } from '../engine/stageRenderer.js';
 
@@ -110,6 +111,20 @@ export function renderQuickPanel(container, { onChange } = {}) {
   }
 
   container.appendChild(g);
+}
+
+// Activa/desactiva el subtítulo del artículo. Desactivado: no se ve ni se
+// exporta, y el título principal ocupa también su hueco (sin espacio vacío).
+function setArticleSubtitle(enabled) {
+  const state = getState();
+  const mainTitle = state.layers.find((l) => l.slot === 'mainTitle');
+  const subtitle = state.layers.find((l) => l.slot === 'subtitle');
+  if (!mainTitle || !subtitle) return;
+  updateLayer(subtitle.id, { visible: enabled }); // una capa oculta tampoco sale en el PNG
+  const height = enabled
+    ? subtitle.y - ARTICLE_SUBTITLE_GAP - mainTitle.y
+    : subtitle.y + subtitle.height - mainTitle.y;
+  updateLayer(mainTitle.id, { height: Math.max(40, height) }, { history: false });
 }
 
 export function renderProps(container, layerId, { onChange, onRemove } = {}) {
@@ -265,6 +280,29 @@ export function renderProps(container, layerId, { onChange, onRemove } = {}) {
     textarea.value = layer.text;
     textarea.addEventListener('input', () => patch({ text: textarea.value }));
     g.appendChild(row('Contenido', textarea));
+
+    // Artículo: interruptor del subtítulo, visible tanto desde el título
+    // principal como desde el propio subtítulo
+    if (layer.slot === 'mainTitle' || layer.slot === 'subtitle') {
+      const state = getState();
+      const mainTitle = state.layers.find((l) => l.slot === 'mainTitle');
+      const subtitle = state.layers.find((l) => l.slot === 'subtitle');
+      if (mainTitle && subtitle) {
+        const enabled = subtitle.visible !== false;
+        const subRow = document.createElement('div');
+        subRow.className = 'toggle-row';
+        const subBtn = document.createElement('button');
+        subBtn.textContent = enabled ? 'Subtítulo ✓' : 'Subtítulo desactivado';
+        if (enabled) subBtn.classList.add('active');
+        subBtn.addEventListener('click', () => {
+          setArticleSubtitle(!enabled);
+          onChange && onChange();
+          renderProps(container, layerId, { onChange, onRemove });
+        });
+        subRow.appendChild(subBtn);
+        g.appendChild(subRow);
+      }
+    }
 
     if (isBodySticker || (isGeneralEditor && layer.role === 'body')) {
       const boldHint = document.createElement('p');

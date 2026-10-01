@@ -279,7 +279,10 @@ function resetWorkspace(id) {
 
 async function applyTemplate(id, { fresh = false } = {}) {
   if (fresh) resetWorkspace(id);
-  const doc = workspaces.get(id) || loadTemplateDoc(id);
+  const freshDoc = loadTemplateDoc(id);
+  let doc = workspaces.get(id) || freshDoc;
+  // espacio guardado con una estructura antigua de la plantilla: se empieza de nuevo
+  if (doc !== freshDoc && freshDoc && (doc.templateVersion || 1) !== (freshDoc.templateVersion || 1)) doc = freshDoc;
   if (!doc) return;
   saveCurrentWorkspace(); // lo que había en la plantilla anterior se queda en su espacio
   switchingTemplate = true;
