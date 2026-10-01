@@ -1,5 +1,5 @@
 import { getState, loadDocument, addLayer, undo, redo, updateLayer, serializeDocument, setCanvasSize, subscribe } from './engine/state.js';
-import { computeTextTitleGeometry, computeLocationGeometry, computePhotoBadgeGeometry, pinAssetForColor, defaultBodyStickerBox } from './templates/locationGenerator.js';
+import { computeTextTitleGeometry, computeLocationGeometry, computePhotoBadgeGeometry, pinAssetForColor } from './templates/locationGenerator.js';
 import { StageRenderer, exportPNG, exportLayersSeparately } from './engine/stageRenderer.js';
 import { makeTextLayer, makeImageLayer, makeLogoLayer, makePinLayer, makeFrameLayer, makeBackgroundLayer } from './engine/layerFactory.js';
 import { listTemplates, loadTemplateDoc, saveAsNewTemplate, deleteTemplate } from './templates/store.js';
@@ -7,7 +7,8 @@ import { renderLayerList } from './ui/layerList.js';
 import { renderProps, renderQuickPanel } from './ui/propsPanel.js';
 import { dataURLToBlob, dataURLToUint8Array, downloadBlob } from './lib/download.js';
 import { createZip } from './lib/zip.js';
-import { COLORS, FONT_FAMILY_TITLE_ITALIC } from './engine/constants.js';
+import { COLORS, FONT_FAMILY_TITLE_ITALIC, FONT_WIDTH_VARIANTS } from './engine/constants.js';
+import { layoutRichText, bodyWeights } from './engine/richText.js';
 import { fontSpecsForState, ensureFonts } from './engine/fonts.js';
 
 const BRAND_COLORS = [COLORS.white, COLORS.red, COLORS.black].map((c) => c.toLowerCase());
@@ -58,18 +59,30 @@ function regenerateQuick() {
   } else if (mode === 'body') {
     const text = state.layers.find((l) => l.type === 'text');
     if (!text) return;
-    if (text.locked) {
-      // se acaba de pasar de título a cuerpo: se desbloquea y se da una caja
-      // de trabajo amplia, libre, con ajuste de línea normal
-      const box = defaultBodyStickerBox();
-      setCanvasSize(box.canvasW, box.canvasH);
-      updateLayer(text.id, {
-        x: box.x, y: box.y, width: box.width, height: box.height,
-        locked: false, autoFit: true, letterSpacing: 0,
-      }, { history: false });
-    }
-    // ya desbloqueado no se recalcula nada más: el usuario maneja su propia
-    // caja (posición/tamaño) como en el editor normal
+    // El lienzo se ajusta SIEMPRE al texto: tamaño de letra y ancho de línea
+    // los elige el usuario; el texto salta de línea solo (las palabras
+    // demasiado largas se parten) y el sticker crece en alto/ancho según lo
+    // escrito. Antes la caja era fija y el texto se salía por la derecha.
+    const pill = state.layers.find((l) => l.type === 'pill' && l.targetId === text.id);
+    const fontSize = text.fontSize || 64;
+    const lineWidth = text.lineWidth || 1000;
+    const align = text.align || 'left';
+    const variant = FONT_WIDTH_VARIANTS.find((v) => v.key === (text.widthVariant || 'normal')) || FONT_WIDTH_VARIANTS[3];
+    const { normal, bold } = bodyWeights(text);
+    const layout = layoutRichText({
+      text: text.text || '', box: { width: lineWidth, height: Infinity },
+      fontFamily: variant.family, fontFamilyItalic: variant.familyItalic, italic: !!text.italic,
+      normalWeight: normal, boldWeight: bold, fontSize, align,
+    });
+    const contentW = Math.ceil(align === 'justify' && layout.lineCount > 1 ? lineWidth : layout.maxLineWidth) + 1;
+    const contentH = Math.ceil(Math.max(layout.usedHeight, fontSize * 1.08));
+    // margen: cursivas/acentos que sobresalen + el relleno de la pastila
+    const margin = Math.round(fontSize * 0.5 + 20 + (pill ? pill.padding || 0 : 0));
+    setCanvasSize(contentW + margin * 2, contentH + margin * 2);
+    updateLayer(text.id, {
+      x: margin, y: margin, width: contentW, height: contentH, rotation: 0,
+      fontSize, lineWidth, align, autoFit: false, locked: true,
+    }, { history: false });
   } else if (mode === 'location' || mode === 'photoLocation') {
     // la ubicación solo admite colores corporativos: cualquier otro (p. ej.
     // de un espacio de trabajo guardado antes) vuelve a blanco

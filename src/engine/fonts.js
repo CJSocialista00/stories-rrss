@@ -1,4 +1,5 @@
 import { FONT_WIDTH_VARIANTS } from './constants.js';
+import { bodyWeights } from './richText.js';
 
 // Las 90 fuentes estáticas de Acumin no se descargan todas al abrir la app:
 // solo las que usa el documento actual, justo antes de medir/dibujar. Así el
@@ -18,9 +19,13 @@ export function fontSpecsForState(state) {
     const isTitle = d.role === 'title';
     const family = familyFor(d.widthVariant || (isTitle ? 'extracondensed' : 'normal'));
     const style = d.italic ? 'italic ' : '';
-    const weight = d.weight || (isTitle ? 800 : (d.bold ? 700 : 400));
-    specs.add(`${style}${weight} 100px "${family}"`);
-    if (!isTitle) specs.add(`${style}700 100px "${family}"`); // negrita parcial (**así**)
+    if (isTitle) {
+      specs.add(`${style}${d.weight || 800} 100px "${family}"`);
+    } else {
+      const { normal, bold } = bodyWeights(d); // base + negrita parcial (**así**)
+      specs.add(`${style}${normal} 100px "${family}"`);
+      specs.add(`${style}${bold} 100px "${family}"`);
+    }
   }
   return [...specs];
 }

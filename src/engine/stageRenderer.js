@@ -1,7 +1,7 @@
 import { getState, updateLayer, selectLayer, pushHistory } from './state.js';
 import { CANVAS_W, CANVAS_H, FONT_FAMILY, FONT_FAMILY_ITALIC, FONT_FAMILY_TITLE, FONT_FAMILY_TITLE_ITALIC, FONT_WIDTH_VARIANTS } from './constants.js';
 import { fitTextToBox } from './textFit.js';
-import { layoutRichText, fitRichText } from './richText.js';
+import { layoutRichText, fitRichText, bodyWeights } from './richText.js';
 
 const imageCache = new Map();
 function loadImage(src) {
@@ -553,8 +553,8 @@ export class StageRenderer {
         fontFamily: variant.family,
         fontFamilyItalic: variant.familyItalic,
         italic: !!d.italic,
-        normalWeight: d.bold ? 700 : 400,
-        boldWeight: 700,
+        normalWeight: bodyWeights(d).normal,
+        boldWeight: bodyWeights(d).bold,
         align: d.align || 'left',
         minSize: 12,
         maxSize: 90,
@@ -613,8 +613,7 @@ export class StageRenderer {
   // el cuerpo se renderiza siempre como un grupo de "runs" (permite negrita parcial con **así**)
   buildBodyRuns(group, d) {
     const fontSize = this.resolveFontSize(d);
-    const boldWeight = 700;
-    const normalWeight = d.bold ? 700 : 400; // "Negrita" global sigue funcionando como peso base
+    const { normal: normalWeight, bold: boldWeight } = bodyWeights(d);
     const variant = FONT_WIDTH_VARIANTS.find((v) => v.key === d.widthVariant) || FONT_WIDTH_VARIANTS[3];
     const layout = layoutRichText({
       text: d.text || '',

@@ -415,6 +415,28 @@ export function renderProps(container, layerId, { onChange, onRemove } = {}) {
       g.appendChild(styleToggle);
     }
 
+    // alineación del párrafo (cuerpo del sticker y del editor general)
+    if (isBodySticker || isGeneralEditor) {
+      const alignRow = document.createElement('div');
+      alignRow.className = 'toggle-row';
+      const currentAlign = layer.align || 'left';
+      [['Izquierda', 'left'], ['Centro', 'center'], ['Derecha', 'right'], ['Justificar', 'justify']].forEach(([label, key]) => {
+        const b = document.createElement('button');
+        b.textContent = label;
+        if (currentAlign === key) b.classList.add('active');
+        b.addEventListener('click', () => { patch({ align: key }); renderProps(container, layerId, { onChange, onRemove }); });
+        alignRow.appendChild(b);
+      });
+      g.appendChild(row('Párrafo', alignRow));
+    }
+
+    // sticker de cuerpo: el lienzo se ajusta solo al texto; se controla con
+    // el tamaño de letra y el ancho máximo de cada línea
+    if (isBodySticker) {
+      g.appendChild(row('Tamaño letra', rangeWithNumber(20, 200, 1, layer.fontSize || 64, (v) => patch({ fontSize: v }))));
+      g.appendChild(row('Ancho línea', rangeWithNumber(300, 2400, 10, layer.lineWidth || 1000, (v) => patch({ lineWidth: v }))));
+    }
+
     const colorInput = document.createElement('input');
     colorInput.type = 'color';
     colorInput.value = layer.color || '#ffffff';
@@ -435,16 +457,6 @@ export function renderProps(container, layerId, { onChange, onRemove } = {}) {
     // o una caja que siempre se autoajusta): solo se muestran en el editor
     // general (stories, artículo...).
     if (isGeneralEditor) {
-      const alignSelect = document.createElement('select');
-      ['left', 'center', 'right'].forEach((a) => {
-        const opt = document.createElement('option');
-        opt.value = a; opt.textContent = a === 'left' ? 'Izquierda' : a === 'center' ? 'Centro' : 'Derecha';
-        if (layer.align === a) opt.selected = true;
-        alignSelect.appendChild(opt);
-      });
-      alignSelect.addEventListener('change', () => patch({ align: alignSelect.value }));
-      g.appendChild(row('Alinear', alignSelect));
-
       const autoFitToggle = document.createElement('div');
       autoFitToggle.className = 'toggle-row';
       const afBtn = document.createElement('button');
@@ -734,7 +746,8 @@ export function renderProps(container, layerId, { onChange, onRemove } = {}) {
   // posición/escala y exportación van al final: son ajustes finos, no lo
   // primero que se quiere tocar al diseñar. En el sticker de título no
   // aplican (lienzo fijo al contenido, una sola capa): se omiten del todo.
-  if (topQuickMode !== 'title') {
+  // título y cuerpo de sticker: lienzo ajustado al contenido, sin posición
+  if (topQuickMode !== 'title' && topQuickMode !== 'body') {
     container.appendChild(buildTransformGroup());
   }
   if (!topQuickMode && !isFrame) { // el marco nunca se exporta: sin opción

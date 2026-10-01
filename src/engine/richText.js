@@ -28,6 +28,14 @@ export function parseBoldSegments(text) {
   return segments;
 }
 
+// Peso base del cuerpo (el que se elige con los botones de peso) y peso de
+// la negrita parcial (**así**), siempre visiblemente más grueso que la base.
+export function bodyWeights(d) {
+  const normal = d.weight || (d.bold ? 700 : 400);
+  const bold = Math.min(900, Math.max(700, normal + 300));
+  return { normal, bold };
+}
+
 export function hasBoldMarkers(text) {
   return /\*\*(.+?)\*\*/.test(text || '');
 }
@@ -58,68 +66,86 @@ export function layoutRichText({
   const ctx = getCtx();
   const family = italic ? fontFamilyItalic : fontFamily;
   const words = segmentsToWords(parseBoldSegments(text));
-  const spaceWidth = (bold) => {
-    ctx.font = fontString(bold ? boldWeight : normalWeight, fontSize, family, italic);
-    return ctx.measureText(' ').width;
-  };
 
   const lines = [];
   let current = [];
-  let currentWidth = 0;
 
-  const pushLine = () => {
-    lines.push({ words: current, width: currentWidth });
+  const isSpaceText = (t) => /^\s+$/.test(t);
+  const lineWidth = (words) => words.reduce((acc, w) => acc + w.width, 0);
+  // endsParagraph: la línea termina en un Enter o es la última (no se justifica)
+  const pushLine = (endsParagraph) => {
+    while (current.length && isSpaceText(current[current.length - 1].text)) current.pop();
+    lines.push({ words: current, width: lineWidth(current), endsParagraph });
     current = [];
-    currentWidth = 0;
+  };
+  const measure = (text, bold) => {
+    ctx.font = fontString(bold ? boldWeight : normalWeight, fontSize, family, italic);
+    return ctx.measureText(text).width;
+  };
+
+  // Una palabra más ancha que la caja (p.ej. escribir sin espacios) se parte
+  // por letras; antes se salía por la derecha del lienzo.
+  const splitLongWord = (word) => {
+    const pieces = [];
+    let piece = '';
+    for (const ch of word.text) {
+      if (piece && measure(piece + ch, word.bold) > box.width) {
+        pieces.push(piece);
+        piece = ch;
+      } else {
+        piece += ch;
+      }
+    }
+    if (piece) pieces.push(piece);
+    return pieces.map((t) => ({ text: t, bold: word.bold, width: measure(t, word.bold) }));
   };
 
   for (const word of words) {
     if (word.text === '\n') {
       // salto de línea forzado: cierra la línea actual aunque esté vacía, así
       // un Enter doble deja una línea en blanco entre párrafos
-      while (current.length && /^\s+$/.test(current[current.length - 1].text)) current.pop();
-      currentWidth = current.reduce((acc, w) => acc + w.width, 0);
-      pushLine();
+      pushLine(true);
       continue;
     }
-    const isSpace = /^\s+$/.test(word.text);
-    ctx.font = fontString(word.bold ? boldWeight : normalWeight, fontSize, family, italic);
-    const w = ctx.measureText(word.text).width;
-    if (isSpace) {
-      // no arrancamos línea con un espacio, y no medimos el espacio final de línea
+    const w = measure(word.text, word.bold);
+    if (isSpaceText(word.text)) {
+      // no arrancamos línea con un espacio
       if (current.length === 0) continue;
       current.push({ ...word, width: w });
-      currentWidth += w;
       continue;
     }
-    if (currentWidth + w > box.width && current.length > 0) {
-      // quitamos espacios sobrantes al final de la línea
-      while (current.length && /^\s+$/.test(current[current.length - 1].text)) current.pop();
-      pushLine();
+    const pieces = w > box.width ? splitLongWord(word) : [{ ...word, width: w }];
+    for (const piece of pieces) {
+      const used = lineWidth(current);
+      if (used + piece.width > box.width && current.some((x) => !isSpaceText(x.text))) pushLine(false);
+      current.push(piece);
     }
-    current.push({ ...word, width: w });
-    currentWidth += w;
   }
-  if (current.length) {
-    while (current.length && /^\s+$/.test(current[current.length - 1].text)) current.pop();
-    if (current.length) pushLine();
-  }
+  if (current.length) pushLine(true);
+  if (lines.length) lines[lines.length - 1].endsParagraph = true;
 
-  // posiciones x por alineación
+  // posiciones x por alineación (justificado: el hueco sobrante se reparte
+  // entre los espacios, salvo en la última línea de cada párrafo)
   let y = 0;
   const positioned = [];
   for (const line of lines) {
     let x = 0;
+    let extraPerSpace = 0;
     if (align === 'center') x = (box.width - line.width) / 2;
     else if (align === 'right') x = box.width - line.width;
+    else if (align === 'justify' && !line.endsParagraph) {
+      const spaces = line.words.filter((w) => isSpaceText(w.text)).length;
+      if (spaces) extraPerSpace = (box.width - line.width) / spaces;
+    }
     for (const w of line.words) {
       positioned.push({ ...w, x, y, family });
-      x += w.width;
+      x += w.width + (isSpaceText(w.text) ? extraPerSpace : 0);
     }
     y += fontSize * lineHeight;
   }
 
-  return { runs: positioned, usedHeight: lines.length ? y : 0, lineCount: lines.length };
+  const maxLineWidth = lines.reduce((m, l) => Math.max(m, l.width), 0);
+  return { runs: positioned, usedHeight: lines.length ? y : 0, lineCount: lines.length, maxLineWidth };
 }
 
 /**
