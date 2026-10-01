@@ -498,3 +498,12 @@ select {
   white-space: nowrap;
   border: 0;
 }
+
+/* botones de color dentro de una fila con etiqueta (ubicación): ocupan todo el ancho */
+.prop-row > .toggle-row { flex: 1; margin-bottom: 0; }
+.prop-row > .toggle-row button { min-height: 40px; }
+
+/* vista previa clara: cuando un sticker es negro, sobre el damero oscuro no se veía */
+#canvasArea.light-preview {
+  background: repeating-conic-gradient(#e9e9e9 0% 25%, #dcdcdc 0% 50%) 50% / 24px 24px;
+}

@@ -63,21 +63,26 @@ export function renderQuickPanel(container, { onChange } = {}) {
   textarea.addEventListener('input', () => patchText({ text: textarea.value }));
   g.appendChild(row('Ubicación', textarea));
 
-  const colorInput = document.createElement('input');
-  colorInput.type = 'color';
-  colorInput.value = text.color || '#ffffff';
-  colorInput.addEventListener('input', () => patchText({ color: colorInput.value }));
+  // Solo colores corporativos (sin selector libre). Se reacciona en
+  // pointerdown: en el móvil, si el teclado está abierto, el primer toque lo
+  // cierra, el panel se recoloca y el "click" acababa fuera del botón.
   const quickColors = document.createElement('div');
   quickColors.className = 'toggle-row';
-  [['Blanco', '#ffffff'], ['Rojo', COLORS.red], ['Negro', COLORS.black]].forEach(([label, hex]) => {
+  const currentColor = (text.color || COLORS.white).toLowerCase();
+  [['Blanco', COLORS.white], ['Rojo', COLORS.red], ['Negro', COLORS.black]].forEach(([label, hex]) => {
     const b = document.createElement('button');
+    b.type = 'button';
     b.textContent = label;
-    if ((text.color || '').toLowerCase() === hex.toLowerCase()) b.classList.add('active');
-    b.addEventListener('click', () => { colorInput.value = hex; patchText({ color: hex }); renderQuickPanel(container, { onChange }); });
+    if (currentColor === hex.toLowerCase()) b.classList.add('active');
+    b.addEventListener('pointerdown', (e) => {
+      e.preventDefault(); // que no robe el foco ni dispare el cierre del teclado antes de aplicar
+      if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+      patchText({ color: hex });
+      renderQuickPanel(container, { onChange });
+    });
     quickColors.appendChild(b);
   });
-  g.appendChild(row('Color', colorInput));
-  g.appendChild(quickColors);
+  g.appendChild(row('Color', quickColors));
 
   if (mode === 'photoLocation' && pin) {
     const cornerGrid = document.createElement('div');

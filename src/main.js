@@ -7,6 +7,9 @@ import { renderLayerList } from './ui/layerList.js';
 import { renderProps, renderQuickPanel } from './ui/propsPanel.js';
 import { dataURLToBlob, dataURLToUint8Array, downloadBlob } from './lib/download.js';
 import { createZip } from './lib/zip.js';
+import { COLORS } from './engine/constants.js';
+
+const BRAND_COLORS = [COLORS.white, COLORS.red, COLORS.black].map((c) => c.toLowerCase());
 
 const stageContainer = document.getElementById('stageContainer');
 const layerListEl = document.getElementById('layerList');
@@ -76,7 +79,15 @@ function regenerateQuick() {
     }
     // ya desbloqueado no se recalcula nada más: el usuario maneja su propia
     // caja (posición/tamaño) como en el editor normal
-  } else if (mode === 'location') {
+  } else if (mode === 'location' || mode === 'photoLocation') {
+    // la ubicación solo admite colores corporativos: cualquier otro (p. ej.
+    // de un espacio de trabajo guardado antes) vuelve a blanco
+    const text = state.layers.find((l) => l.type === 'text');
+    if (text && !BRAND_COLORS.includes((text.color || '').toLowerCase())) {
+      updateLayer(text.id, { color: COLORS.white }, { history: false });
+    }
+  }
+  if (mode === 'location') {
     const pin = state.layers.find((l) => l.type === 'pin');
     const text = state.layers.find((l) => l.type === 'text');
     if (!pin || !text) return;
@@ -96,6 +107,17 @@ function regenerateQuick() {
   }
 }
 
+// Stickers (sin fondo) en negro corporativo: el damero oscuro del lienzo los
+// hacía casi invisibles y parecía que el color no cambiaba. Se aclara el
+// fondo de la vista previa (no afecta al PNG exportado, que es transparente).
+function updatePreviewBackground() {
+  const state = getState();
+  const text = state.layers.find((l) => l.type === 'text');
+  const isSticker = state.quickGenerator === 'location' || state.quickGenerator === 'title' || state.quickGenerator === 'body';
+  const isBlack = !!text && (text.color || '').toLowerCase() === COLORS.black.toLowerCase();
+  document.getElementById('canvasArea').classList.toggle('light-preview', isSticker && isBlack);
+}
+
 // Se llama en cada tecla / paso de slider: varias llamadas dentro del mismo
 // fotograma se agrupan en un único recálculo + redibujado.
 let refreshCanvasFrame = null;
@@ -104,6 +126,7 @@ function refreshCanvas() {
   refreshCanvasFrame = requestAnimationFrame(async () => {
     refreshCanvasFrame = null;
     regenerateQuick();
+    updatePreviewBackground();
     await renderer.render();
     if (getState().quickGenerator) fitStage();
   });
@@ -138,6 +161,7 @@ function refreshLayers() {
 
 async function refreshAll() {
   regenerateQuick();
+  updatePreviewBackground();
   await renderer.render();
   refreshLayers();
   refreshProps();
