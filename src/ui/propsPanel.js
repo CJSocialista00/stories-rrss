@@ -281,6 +281,8 @@ export function renderProps(container, layerId, { onChange, onRemove } = {}) {
     g.innerHTML = '<strong>Texto</strong>';
     const textarea = document.createElement('textarea');
     textarea.value = layer.text;
+    // el cuerpo admite varios párrafos: campo más alto para verlos
+    if (layer.role !== 'title') textarea.rows = 6;
     textarea.addEventListener('input', () => patch({ text: textarea.value }));
     g.appendChild(row('Contenido', textarea));
 

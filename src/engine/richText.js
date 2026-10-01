@@ -32,11 +32,13 @@ export function hasBoldMarkers(text) {
   return /\*\*(.+?)\*\*/.test(text || '');
 }
 
-// Trocea los segmentos en "palabras" (con el espacio final incluido) preservando el flag bold.
+// Trocea los segmentos en "palabras", espacios y saltos de línea ("\n" va
+// como token propio para respetar los puntos y aparte y las líneas vacías),
+// preservando el flag bold.
 function segmentsToWords(segments) {
   const words = [];
   for (const seg of segments) {
-    const parts = seg.text.split(/(\s+)/).filter((p) => p.length);
+    const parts = seg.text.replace(/\r\n?/g, '\n').split(/(\n|[^\S\n]+)/).filter((p) => p.length);
     for (const part of parts) words.push({ text: part, bold: seg.bold });
   }
   return words;
@@ -72,6 +74,14 @@ export function layoutRichText({
   };
 
   for (const word of words) {
+    if (word.text === '\n') {
+      // salto de línea forzado: cierra la línea actual aunque esté vacía, así
+      // un Enter doble deja una línea en blanco entre párrafos
+      while (current.length && /^\s+$/.test(current[current.length - 1].text)) current.pop();
+      currentWidth = current.reduce((acc, w) => acc + w.width, 0);
+      pushLine();
+      continue;
+    }
     const isSpace = /^\s+$/.test(word.text);
     ctx.font = fontString(word.bold ? boldWeight : normalWeight, fontSize, family, italic);
     const w = ctx.measureText(word.text).width;
