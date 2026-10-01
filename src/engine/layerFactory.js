@@ -140,6 +140,32 @@ export function makeFrameLayer({
   };
 }
 
+// Pastilla de fondo de un texto (sticker de cuerpo con fondo): un rectángulo
+// redondeado que se ajusta solo al texto real de la capa targetId, con un
+// margen interior; no se mueve por sí misma, sigue siempre al texto.
+export function makePillLayer({
+  name = 'Fondo (pastilla)',
+  targetId,
+  color = COLORS.red,
+  cornerRadius = 36,
+  padding = 44,
+} = {}) {
+  return {
+    id: nextId('pill'),
+    type: 'pill',
+    name,
+    visible: true,
+    x: 0, y: 0, width: 0, height: 0,
+    rotation: 0,
+    targetId,
+    color,
+    cornerRadius,
+    padding,
+    locked: true,
+    exportable: true,
+  };
+}
+
 export function makeBackgroundLayer({
   name = 'Fondo',
   x = 0,

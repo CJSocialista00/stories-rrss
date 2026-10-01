@@ -104,8 +104,11 @@ function regenerateQuick() {
 function updatePreviewBackground() {
   const state = getState();
   const text = state.layers.find((l) => l.type === 'text');
+  // con pastila de fondo, lo que se ve sobre el damero es la pastila
+  const pill = state.layers.find((l) => l.type === 'pill' && l.visible !== false);
   const isSticker = state.quickGenerator === 'location' || state.quickGenerator === 'title' || state.quickGenerator === 'body';
-  const isBlack = !!text && (text.color || '').toLowerCase() === COLORS.black.toLowerCase();
+  const visibleColor = pill ? pill.color : text && text.color;
+  const isBlack = (visibleColor || '').toLowerCase() === COLORS.black.toLowerCase();
   document.getElementById('canvasArea').classList.toggle('light-preview', isSticker && isBlack);
 }
 

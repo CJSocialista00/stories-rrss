@@ -1,6 +1,6 @@
 import { getState, updateLayer, selectLayer } from '../engine/state.js';
 
-const TYPE_ICON = { text: '𝐓', image: '🖼', logo: '◭', pin: '📍', frame: '▢', gradient: '▨', background: '■' };
+const TYPE_ICON = { text: '𝐓', image: '🖼', logo: '◭', pin: '📍', frame: '▢', pill: '⬭', gradient: '▨', background: '■' };
 
 export function renderLayerList(container, { onSelect } = {}) {
   container.innerHTML = '';

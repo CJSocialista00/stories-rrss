@@ -1,5 +1,5 @@
 import { COLORS, FONT_WIDTH_VARIANTS } from '../engine/constants.js';
-import { makeTextLayer, makePinLayer, makeImageLayer } from '../engine/layerFactory.js';
+import { makeTextLayer, makePinLayer, makeImageLayer, makePillLayer } from '../engine/layerFactory.js';
 import { FONT_FAMILY_TITLE_ITALIC } from '../engine/constants.js';
 
 // Proporciones medidas directamente sobre tus stickers reales
@@ -193,6 +193,28 @@ export function buildTextBodyDoc(textRaw = 'Escribe aquí tu texto largo. Puedes
         x: box.x, y: box.y, width: box.width, height: box.height,
         color, align: 'left', widthVariant: 'normal',
       }),
+    ],
+  };
+}
+
+// Igual que el sticker de cuerpo, pero con una pastila de color corporativo
+// detrás del texto. Lienzo con más margen para que quepa el relleno de la
+// pastila (hasta 120px) alrededor de la caja de texto.
+export function buildTextBodyPillDoc(textRaw = 'Texto sobre una **pastila de color**.\n\nPuedes separar párrafos con una línea vacía.', { color = COLORS.white, pillColor = COLORS.red } = {}) {
+  const box = { canvasW: 1300, canvasH: 640, x: 130, y: 130, width: 1040, height: 380 };
+  const text = makeTextLayer({
+    name: 'Texto', role: 'body', locked: false, autoFit: true,
+    text: textRaw,
+    x: box.x, y: box.y, width: box.width, height: box.height,
+    color, align: 'left', widthVariant: 'normal',
+  });
+  return {
+    canvas: { width: box.canvasW, height: box.canvasH },
+    templateName: 'Sticker de cuerpo con fondo',
+    quickGenerator: 'body',
+    layers: [
+      makePillLayer({ targetId: text.id, color: pillColor }),
+      text,
     ],
   };
 }

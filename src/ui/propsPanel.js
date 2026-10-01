@@ -460,6 +460,40 @@ export function renderProps(container, layerId, { onChange, onRemove } = {}) {
     }
 
     container.appendChild(g);
+
+    // pastila de fondo asociada a este texto (sticker de cuerpo con fondo)
+    const pill = getState().layers.find((l) => l.type === 'pill' && l.targetId === layer.id);
+    if (pill) {
+      const gp = document.createElement('div');
+      gp.className = 'prop-group';
+      gp.innerHTML = '<strong>Fondo (pastilla)</strong>';
+      const patchPill = (p) => { updateLayer(pill.id, p); onChange && onChange(); };
+      const pillColors = document.createElement('div');
+      pillColors.className = 'toggle-row';
+      const currentPill = (pill.color || '').toLowerCase();
+      [['Rojo', COLORS.red], ['Negro', COLORS.black], ['Blanco', COLORS.white]].forEach(([label, hex]) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = label;
+        if (currentPill === hex.toLowerCase()) b.classList.add('active');
+        // pointerdown: que funcione al primer toque aunque el teclado esté abierto
+        b.addEventListener('pointerdown', (e) => {
+          e.preventDefault();
+          if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+          patchPill({ color: hex });
+          renderProps(container, layerId, { onChange, onRemove });
+        });
+        pillColors.appendChild(b);
+      });
+      gp.appendChild(row('Color', pillColors));
+      gp.appendChild(row('Esquinas', rangeWithNumber(0, 200, 1, pill.cornerRadius || 0, (v) => patchPill({ cornerRadius: v }))));
+      gp.appendChild(row('Margen', rangeWithNumber(0, 120, 1, pill.padding || 0, (v) => patchPill({ padding: v }))));
+      const pillHint = document.createElement('p');
+      pillHint.className = 'hint';
+      pillHint.textContent = 'La pastila se ajusta sola al texto. Esquinas al máximo = extremos totalmente redondos.';
+      gp.appendChild(pillHint);
+      container.appendChild(gp);
+    }
   }
 
   if (layer.type === 'image') {

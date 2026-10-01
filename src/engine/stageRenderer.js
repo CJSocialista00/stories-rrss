@@ -231,6 +231,7 @@ export class StageRenderer {
       if (node) node.moveToTop();
     });
     this.transformer.moveToTop();
+    this.syncPills();
 
     // selección
     if (state.selectedId && this.nodes.has(state.selectedId)) {
@@ -264,6 +265,73 @@ export class StageRenderer {
     this.layer.draw();
   }
 
+  // Límites de la TINTA real del texto (en coordenadas locales del grupo),
+  // midiendo píxeles: la caja de Konva reserva hueco para descendentes
+  // (g, p, q) y el margen de la pastila quedaba más grande abajo que arriba.
+  // Se cachea por contenido, así que arrastrar no vuelve a medir.
+  inkBounds(group) {
+    const runs = group.getChildren().filter((t) => t.text && t.text().trim());
+    if (!runs.length) return null;
+    const key = runs.map((t) => `${t.text()}|${t.x()}|${t.y()}|${t.fontSize()}|${t.fontFamily()}|${t.fontStyle()}`).join('¦');
+    if (group.getAttr('_inkKey') === key) return group.getAttr('_ink');
+    const ratio = 0.5;
+    const clone = group.clone({ x: 0, y: 0, rotation: 0, scaleX: 1, scaleY: 1, offsetX: 0, offsetY: 0 });
+    const box = clone.getClientRect();
+    const canvas = clone.toCanvas({ pixelRatio: ratio });
+    clone.destroy();
+    const W = canvas.width, H = canvas.height;
+    const data = canvas.getContext('2d').getImageData(0, 0, W, H).data;
+    let minX = W, minY = H, maxX = -1, maxY = -1;
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        if (data[(y * W + x) * 4 + 3] > 40) {
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          maxY = y;
+        }
+      }
+    }
+    const ink = maxX < 0 ? null : {
+      minX: box.x + minX / ratio, minY: box.y + minY / ratio,
+      maxX: box.x + (maxX + 1) / ratio, maxY: box.y + (maxY + 1) / ratio,
+    };
+    group.setAttr('_inkKey', key);
+    group.setAttr('_ink', ink);
+    return ink;
+  }
+
+  // Ajusta cada pastila al texto REAL de su capa (no a la caja): ancho de la
+  // línea más larga y alto de todas las líneas, más el margen interior.
+  // Sigue también la posición/rotación del texto (y se llama en vivo
+  // mientras se arrastra o transforma).
+  syncPills() {
+    const state = getState();
+    for (const d of state.layers) {
+      if (d.type !== 'pill') continue;
+      const rect = this.nodes.get(d.id);
+      const target = this.nodes.get(d.targetId);
+      if (!rect) continue;
+      const ink = target && target.getChildren ? this.inkBounds(target) : null;
+      if (!ink) { rect.visible(false); continue; }
+      const { minX, minY, maxX, maxY } = ink;
+      const pad = d.padding || 0;
+      const w = maxX - minX + pad * 2;
+      const h = maxY - minY + pad * 2;
+      rect.setAttrs({
+        x: target.x(), y: target.y(),
+        rotation: target.rotation(),
+        scaleX: target.scaleX(), scaleY: target.scaleY(),
+        offsetX: -(minX - pad), offsetY: -(minY - pad),
+        width: w, height: h,
+        // radio máximo = media altura (extremos totalmente redondos)
+        cornerRadius: Math.min(d.cornerRadius || 0, h / 2, w / 2),
+        fill: d.color || '#f54949',
+        visible: d.visible !== false && target.visible(),
+      });
+    }
+  }
+
   bindEvents(node, id, layerData) {
     const isFixed = layerData.type === 'background' || layerData.type === 'frame' || layerData.locked === true;
     node.draggable(!isFixed);
@@ -286,6 +354,8 @@ export class StageRenderer {
     const clampY = (v) => Math.min(ch + ch, Math.max(-ch, v));
 
     node.dragBoundFunc((pos) => ({ x: clampX(pos.x), y: clampY(pos.y) }));
+    // la pastila de fondo sigue al texto en vivo
+    node.on('dragmove transform', () => { this.syncPills(); });
     node.on('dragstart', () => { pushHistory(); });
     node.on('dragend', () => {
       updateLayer(id, { x: clampX(node.x()), y: clampY(node.y()) }, { history: false });
@@ -330,6 +400,7 @@ export class StageRenderer {
       case 'frame': return this.createFrameNode(layerData);
       case 'gradient': return this.createGradientNode(layerData);
       case 'background': return this.createBackgroundNode(layerData);
+      case 'pill': return new window.Konva.Rect({ listening: false });
       default: return new window.Konva.Group();
     }
   }
@@ -343,6 +414,7 @@ export class StageRenderer {
       case 'frame': return this.updateFrameNode(node, layerData);
       case 'gradient': return this.updateGradientNode(node, layerData);
       case 'background': return this.updateBackgroundNode(node, layerData);
+      case 'pill': return null; // se coloca en syncPills(), cuando el texto ya está actualizado
       default: return null;
     }
   }
