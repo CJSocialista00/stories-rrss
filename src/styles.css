@@ -1,0 +1,500 @@
+/* Cuerpo: ancho normal (eje wdth = 100, el valor por defecto del archivo) */
+@font-face {
+  font-family: 'Acumin Variable';
+  src: url('../assets/fonts/AcuminVariableConcept.otf');
+  font-weight: 100 900;
+}
+
+/* Título: familia separada con el eje wdth fijado a 50 (ExtraCondensed).
+   Los navegadores no interpretan font-stretch en porcentaje dentro del
+   shorthand `ctx.font` de canvas, así que el ancho condensado se fija aquí,
+   a nivel de @font-face, y el peso (Black) se sigue controlando por JS. */
+@font-face {
+  font-family: 'Acumin Condensed';
+  src: url('../assets/fonts/AcuminVariableConcept.otf');
+  font-weight: 100 900;
+  font-stretch: 50% 50%;
+}
+
+/* Variantes en cursiva: familias propias con el eje slnt fijado a 12°
+   (coincide con las instancias "…Italic" del archivo), por el mismo motivo
+   que el ancho: los ejes variables no son fiables dentro del string de
+   canvas, así que se fijan aquí a nivel de @font-face. */
+@font-face {
+  font-family: 'Acumin Variable Italic';
+  src: url('../assets/fonts/AcuminVariableConcept.otf');
+  font-weight: 100 900;
+  font-style: oblique 12deg;
+}
+@font-face {
+  font-family: 'Acumin Condensed Italic';
+  src: url('../assets/fonts/AcuminVariableConcept.otf');
+  font-weight: 100 900;
+  font-stretch: 50% 50%;
+  font-style: oblique 12deg;
+}
+
+/* Anchos adicionales para la libertad de estilo del sticker de texto (modo
+   Cuerpo): Semicondensada (wdth=67.5) y Ancha (wdth=115), cada una con su
+   itálica, mismo motivo de siempre (font-stretch no es fiable en canvas). */
+@font-face {
+  font-family: 'Acumin Semicondensed';
+  src: url('../assets/fonts/AcuminVariableConcept.otf');
+  font-weight: 100 900;
+  font-stretch: 67.5% 67.5%;
+}
+@font-face {
+  font-family: 'Acumin Semicondensed Italic';
+  src: url('../assets/fonts/AcuminVariableConcept.otf');
+  font-weight: 100 900;
+  font-stretch: 67.5% 67.5%;
+  font-style: oblique 12deg;
+}
+@font-face {
+  font-family: 'Acumin Wide';
+  src: url('../assets/fonts/AcuminVariableConcept.otf');
+  font-weight: 100 900;
+  font-stretch: 115% 115%;
+}
+@font-face {
+  font-family: 'Acumin Wide Italic';
+  src: url('../assets/fonts/AcuminVariableConcept.otf');
+  font-weight: 100 900;
+  font-stretch: 115% 115%;
+  font-style: oblique 12deg;
+}
+
+:root {
+  --bg: #1b1c1c;
+  --panel: #282929;
+  --panel-light: #333535;
+  --border: #3d3f3f;
+  --text: #f2f2f2;
+  --text-dim: #a8a8a8;
+  --accent: #f54949;
+  --accent-hover: #ff5f5f;
+  --radius: 8px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Acumin Variable', system-ui, sans-serif;
+  overflow: hidden;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+#topbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.spacer { flex: 1; }
+
+.icon-btn, .btn {
+  background: var(--panel-light);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.icon-btn { padding: 6px 10px; font-size: 16px; }
+.btn:hover, .icon-btn:hover { background: #3d3f3f; }
+.btn.small { padding: 6px 8px; font-size: 12px; }
+.btn-primary { background: var(--accent); border-color: var(--accent); font-weight: 700; }
+.btn-primary:hover { background: var(--accent-hover); }
+
+.template-name {
+  font-size: 13px;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 42vw;
+}
+
+h3 {
+  margin: 0 0 10px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+}
+
+.hint { color: var(--text-dim); font-size: 13px; }
+
+/* ---- lienzo: ocupa todo el espacio vertical disponible entre topbar y bottom sheet ---- */
+#canvasArea {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: repeating-conic-gradient(#232424 0% 25%, #1e1f1f 0% 50%) 50% / 24px 24px;
+  overflow: auto;
+  position: relative;
+  min-height: 0;
+  touch-action: pan-x pan-y pinch-zoom;
+}
+
+#stageWrap {
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  margin: auto;
+  /* el lienzo gestiona sus propios gestos táctiles (arrastrar capas, pellizcar
+     para hacer zoom desde #canvasArea); si dejamos que el navegador también
+     intente paginar/hacer scroll nativo aquí, compite con Konva y las capas
+     pueden "salir disparadas" a coordenadas absurdas durante un arrastre táctil. */
+  touch-action: none;
+  flex-shrink: 0;
+}
+
+#zoomControls {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(40,41,41,0.9);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 4px;
+  z-index: 10;
+}
+#zoomControls .icon-btn { padding: 6px 12px; }
+#zoomControls .btn.small { min-width: 52px; }
+
+/* ---- drawer de plantillas (menú hamburguesa) ---- */
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 50;
+  display: flex;
+}
+.drawer-overlay.hidden { display: none; }
+.drawer-panel {
+  width: min(320px, 85vw);
+  height: 100%;
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+  overflow-y: auto;
+}
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.drawer-header h3 { margin: 0; }
+.template-list { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.template-group-heading {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  margin: 10px 4px 2px;
+}
+.template-group-heading:first-child { margin-top: 0; }
+.template-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border-radius: var(--radius);
+  background: var(--panel-light);
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-size: 14px;
+}
+.template-item.active { border-color: var(--accent); }
+.template-item .tpl-name { flex: 1; }
+.template-item .tpl-del { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 13px; }
+.drawer-footer { margin-top: 12px; }
+
+/* ---- bottom sheet ---- */
+#bottomSheet {
+  position: relative;
+  flex-shrink: 0;
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  max-height: 50vh;
+  transition: max-height 0.2s ease;
+}
+#bottomSheet.collapsed { max-height: 44px; }
+#bottomSheet.collapsed .sheet-tabs,
+#bottomSheet.collapsed .sheet-body { display: none; }
+
+.sheet-handle {
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 8px 0 4px;
+  display: flex;
+  justify-content: center;
+  cursor: pointer;
+}
+.handle-bar {
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+  display: block;
+}
+
+.sheet-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+/* generadores rápidos: no hay capas que navegar, directo al panel único */
+#bottomSheet.quick-mode .sheet-tabs { display: none; }
+.sheet-tab {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  padding: 10px;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+.sheet-tab.active { color: var(--text); border-bottom-color: var(--accent); }
+
+.sheet-body {
+  overflow-y: auto;
+  padding: 12px;
+  flex: 1;
+  min-height: 0;
+}
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+.layer-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: var(--radius);
+  background: var(--panel-light);
+  margin-bottom: 6px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  font-size: 13px;
+}
+.layer-item.selected { border-color: var(--accent); }
+.layer-item .layer-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.layer-item .layer-vis, .layer-item .layer-del {
+  background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 14px; padding: 2px 4px;
+}
+.layer-item .layer-vis:hover, .layer-item .layer-del:hover { color: var(--text); }
+
+.add-layer-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.prop-group {
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.prop-group:last-child { border-bottom: none; }
+
+.prop-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.prop-row label {
+  width: 70px;
+  font-size: 12px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+.prop-row input[type="range"] {
+  flex: 1;
+  accent-color: var(--accent);
+}
+.prop-row input[type="number"] {
+  width: 56px;
+  background: var(--panel-light);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 4px;
+  padding: 4px;
+  font-size: 12px;
+}
+.prop-row input[type="text"], .prop-row textarea { position: relative; }
+.export-menu {
+  /* posición fijada por JS (top/right) para anclarla siempre bajo el botón,
+     sin depender de ancestros con position:relative ni de recortes por overflow */
+  position: fixed;
+  width: 260px;
+  background: var(--panel-light);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  padding: 6px;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.export-menu.hidden { display: none; }
+.export-menu-item {
+  background: none;
+  border: none;
+  color: var(--text);
+  text-align: left;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.export-menu-item:hover { background: var(--panel); }
+.export-menu-item strong { font-size: 13px; }
+.export-menu-item span { font-size: 11px; color: var(--text-dim); }
+
+select {
+  flex: 1;
+  background: var(--panel-light);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 4px;
+  padding: 6px;
+  font-size: 13px;
+  font-family: inherit;
+}
+.prop-row textarea { resize: vertical; min-height: 60px; }
+.prop-row input[type="color"] {
+  width: 40px; height: 28px; border: 1px solid var(--border); border-radius: 4px; background: none; padding: 0;
+}
+
+.ratio-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.ratio-btn {
+  background: var(--panel-light);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 8px 4px;
+  font-size: 12px;
+  cursor: pointer;
+  text-align: center;
+}
+.ratio-btn.active { border-color: var(--accent); color: var(--accent); }
+.ratio-btn:hover { background: #3d3f3f; }
+
+.corner-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  margin-top: 6px;
+}
+.corner-grid button {
+  background: var(--panel-light);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 8px 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.corner-grid button:hover { background: #3d3f3f; }
+
+.logo-variant-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.logo-variant-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: var(--panel-light);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+}
+.logo-variant-btn.active { border-color: var(--accent); }
+.logo-variant-btn:hover { background: #3d3f3f; }
+.logo-variant-swatch {
+  width: 56px;
+  height: 56px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.logo-variant-swatch img { width: 40px; height: 40px; object-fit: contain; }
+.logo-variant-swatch.bg-on-white { background: #ffffff; }
+.logo-variant-swatch.bg-on-black { background: #282929; }
+.logo-variant-swatch.bg-on-red { background: #f54949; }
+.logo-variant-swatch.bg-triangle {
+  background: repeating-conic-gradient(#3a3a3a 0% 25%, #2a2a2a 0% 50%) 50% / 12px 12px;
+}
+.logo-variant-label { font-size: 11px; color: var(--text-dim); text-align: center; }
+
+.toggle-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.toggle-row button {
+  flex: 1;
+  background: var(--panel-light);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.toggle-row button.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.toggle-row button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

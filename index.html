@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>Stories RRSS</title>
+<meta name="theme-color" content="#282929" />
+<link rel="manifest" href="./manifest.json" />
+<link rel="icon" href="./assets/logo/logo-full.png" />
+<link rel="apple-touch-icon" href="./assets/icons/icon-180.png" />
+<link rel="stylesheet" href="./src/styles.css" />
+</head>
+<body>
+  <div id="app">
+
+    <header id="topbar">
+      <button id="btnTemplatesMenu" class="icon-btn" title="Plantillas">☰</button>
+      <div class="template-name" id="templateNameLabel">Plantilla</div>
+      <div class="spacer"></div>
+      <button id="btnUndo" class="icon-btn" title="Deshacer">↶</button>
+      <button id="btnRedo" class="icon-btn" title="Rehacer">↷</button>
+      <div class="export-wrap">
+        <button id="btnExport" class="btn btn-primary">Exportar ▾</button>
+        <div id="exportMenu" class="export-menu hidden">
+          <button id="btnExportSingle" class="export-menu-item">
+            <strong>Un solo PNG</strong>
+            <span>Todos los elementos fusionados en una imagen</span>
+          </button>
+          <button id="btnExportSeparate" class="export-menu-item">
+            <strong>PNG por separado</strong>
+            <span>Un archivo independiente por cada capa (logo, texto…)</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- menú desplegable de plantillas -->
+    <div id="templatesDrawer" class="drawer-overlay hidden">
+      <div class="drawer-panel">
+        <div class="drawer-header">
+          <h3>Plantillas</h3>
+          <button id="btnCloseTemplates" class="icon-btn">✕</button>
+        </div>
+        <div id="templateListItems" class="template-list"></div>
+        <div class="drawer-footer">
+          <button id="btnSaveTemplate" class="btn btn-primary" style="width:100%">Guardar diseño actual como plantilla</button>
+        </div>
+      </div>
+    </div>
+
+    <main id="canvasArea">
+      <div id="stageWrap">
+        <div id="stageContainer"></div>
+      </div>
+      <div id="zoomControls">
+        <button id="btnZoomOut" class="icon-btn" title="Alejar">−</button>
+        <button id="btnZoomFit" class="btn small" title="Ver completo">100%</button>
+        <button id="btnZoomIn" class="icon-btn" title="Acercar">+</button>
+      </div>
+    </main>
+
+    <!-- panel inferior deslizante -->
+    <div id="bottomSheet" class="collapsed">
+      <button id="sheetHandle" class="sheet-handle" aria-label="Abrir panel">
+        <span class="handle-bar"></span>
+      </button>
+      <div class="sheet-tabs">
+        <button class="sheet-tab active" data-tab="layers">Capas</button>
+        <button class="sheet-tab" data-tab="props">Propiedades</button>
+        <button class="sheet-tab" data-tab="add">Añadir</button>
+      </div>
+      <div class="sheet-body">
+        <div id="tabLayers" class="tab-pane active">
+          <div id="layerList"></div>
+        </div>
+        <div id="tabProps" class="tab-pane">
+          <div id="propsContent">
+            <p class="hint">Selecciona una capa para editarla.</p>
+          </div>
+        </div>
+        <div id="tabAdd" class="tab-pane">
+          <div class="add-layer-row">
+            <button id="btnAddText" class="btn small">+ Texto</button>
+            <button id="btnAddImage" class="btn small">+ Imagen</button>
+            <button id="btnAddLogo" class="btn small">+ Logo</button>
+            <button id="btnAddPin" class="btn small">+ Pin ubicación</button>
+            <button id="btnAddFrame" class="btn small">+ Marco compartido</button>
+            <button id="btnAddBackground" class="btn small">+ Fondo de color</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <input type="file" id="fileInputImage" accept="image/*" class="visually-hidden" />
+  </div>
+
+  <script src="./src/vendor/konva.min.js"></script>
+  <script type="module" src="./src/main.js"></script>
+  <script>
+    // Service worker solo en la versión publicada (HTTPS, p.ej. GitHub Pages):
+    // en local (http://localhost o la IP de la LAN) no se registra, para que
+    // mientras desarrollamos nunca se sirvan versiones antiguas de caché.
+    if ('serviceWorker' in navigator && location.protocol === 'https:') {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
+  </script>
+</body>
+</html>

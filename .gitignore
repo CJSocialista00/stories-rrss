@@ -1,0 +1,6 @@
+# imágenes de pruebas de calibración (no forman parte de la app)
+assets/_*.png
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
