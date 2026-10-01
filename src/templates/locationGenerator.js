@@ -275,11 +275,24 @@ export function buildLocationStickerDoc(cityNameRaw, { H = 600, color = COLORS.w
  */
 export function computePhotoBadgeGeometry(cityNameRaw, { corner = 'bottom-left', canvasW = 1080, canvasH = 1350, scale = 1 } = {}) {
   const cityName = (cityNameRaw || 'CIUDAD').toUpperCase().trim() || 'CIUDAD';
-  const H = canvasW * 0.07 * scale;
-  const { fontSize, width: textWidth, letterSpacing, inkOffsetY } = fitFontSizeToCapHeight(cityName, H, FONT_FAMILY_TITLE_ITALIC, 800, TITLE_LETTER_SPACING_RATIO, true);
+  // La foto puede tener cualquier proporción (vertical, horizontal,
+  // cuadrada): el tamaño y el margen del sticker se basan en su lado CORTO
+  // para que se vea igual de grande en todas, y si el nombre es tan largo que
+  // no cabe a lo ancho, se reduce lo justo para que quepa.
+  const base = Math.min(canvasW, canvasH);
+  const margin = base * 0.05;
+  let H = base * 0.07 * scale;
+  let fit = fitFontSizeToCapHeight(cityName, H, FONT_FAMILY_TITLE_ITALIC, 800, TITLE_LETTER_SPACING_RATIO, true);
+  const widthFor = (h, textW) => RATIO.pinWidth * h + RATIO.gap * h + textW;
+  const maxBadgeW = canvasW - margin * 2;
+  if (widthFor(H, fit.width) > maxBadgeW) {
+    // el ancho del sticker escala linealmente con H
+    H *= maxBadgeW / widthFor(H, fit.width);
+    fit = fitFontSizeToCapHeight(cityName, H, FONT_FAMILY_TITLE_ITALIC, 800, TITLE_LETTER_SPACING_RATIO, true);
+  }
+  const { fontSize, width: textWidth, letterSpacing, inkOffsetY } = fit;
   const gap = RATIO.gap * H;
   const pinWidth = RATIO.pinWidth * H;
-  const margin = canvasW * 0.05;
   const badgeW = pinWidth + gap + textWidth;
   const isRight = corner.endsWith('right');
   const isBottom = corner.startsWith('bottom');

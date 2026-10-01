@@ -343,16 +343,17 @@ function readImageScaled(file) {
     reader.onload = () => {
       const original = reader.result;
       const img = new Image();
-      img.onerror = () => resolve(original);
+      img.onerror = () => resolve({ src: original, width: null, height: null });
       img.onload = () => {
         const scale = Math.min(1, MAX_IMAGE_SIDE / Math.max(img.width, img.height));
-        if (scale >= 1) { resolve(original); return; }
+        if (scale >= 1) { resolve({ src: original, width: img.width, height: img.height }); return; }
         const c = document.createElement('canvas');
         c.width = Math.round(img.width * scale);
         c.height = Math.round(img.height * scale);
         c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
         // PNG conserva transparencias (logos, recortes); el resto, JPEG
-        resolve(file.type === 'image/png' ? c.toDataURL('image/png') : c.toDataURL('image/jpeg', 0.92));
+        const src = file.type === 'image/png' ? c.toDataURL('image/png') : c.toDataURL('image/jpeg', 0.92);
+        resolve({ src, width: c.width, height: c.height });
       };
       img.src = original;
     };
@@ -550,8 +551,16 @@ async function init() {
     const layerId = pendingImageLayerId;
     pendingImageLayerId = null;
     fileInputImage.value = '';
-    readImageScaled(file).then(async (src) => {
-      updateLayer(layerId, { src });
+    readImageScaled(file).then(async ({ src, width, height }) => {
+      if (getState().quickGenerator === 'photoLocation' && width && height) {
+        // Foto con ubicación: el lienzo toma el tamaño y la proporción REALES
+        // de la foto (antes se recortaba a un 4:5 fijo); la ubicación se
+        // recoloca después sobre ese tamaño en regenerateQuick().
+        setCanvasSize(width, height);
+        updateLayer(layerId, { src, x: 0, y: 0, width, height, fit: 'cover' });
+      } else {
+        updateLayer(layerId, { src });
+      }
       await refreshAll();
     }).catch((err) => {
       console.error('Error cargando imagen', err);
