@@ -18,6 +18,27 @@ function loadImage(src) {
   return p;
 }
 
+const tintCache = new Map();
+function tintedPin(src, color) {
+  const key = `${src}|${color}`;
+  if (tintCache.has(key)) return tintCache.get(key);
+  const p = loadImage(src).then((img) => {
+    if (!img) return null;
+    const c = document.createElement('canvas');
+    c.width = img.naturalWidth || img.width;
+    c.height = img.naturalHeight || img.height;
+    const ctx = c.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    ctx.globalCompositeOperation = 'source-in';
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, c.width, c.height);
+    return c;
+  });
+  if (tintCache.size > 50) tintCache.clear();
+  tintCache.set(key, p);
+  return p;
+}
+
 const LOGO_ASSETS = {
   // 'full' se mantiene como alias de 'icon-on-black' por compatibilidad con
   // plantillas/documentos guardados antes de tener variantes por fondo.
@@ -404,23 +425,34 @@ export class StageRenderer {
   assetMapFor(d) {
     return d.type === 'pin' ? PIN_ASSETS : LOGO_ASSETS;
   }
-  async createLogoNode(d) {
+  // Imagen del logo/pin. Si el pin lleva "tint" (stickers de ubicación), se
+  // tiñe el pin blanco del color exacto del texto, sea cual sea: antes solo
+  // había PNG para blanco/rojo/negro y con cualquier otro color el pin se
+  // quedaba rojo aunque el texto cambiara.
+  async loadLogoImage(d) {
     const assets = this.assetMapFor(d);
-    const img = await loadImage(assets[d.asset] || assets.full);
+    if (d.type === 'pin' && d.tint) return tintedPin(PIN_ASSETS['pin-on-black'], d.tint);
+    return loadImage(assets[d.asset] || assets.full);
+  }
+  logoImageKey(d) {
+    return d.type === 'pin' && d.tint ? `tint:${d.tint}` : d.asset;
+  }
+  async createLogoNode(d) {
+    const img = await this.loadLogoImage(d);
     const node = new window.Konva.Image({
       image: img || undefined,
       x: d.x, y: d.y, width: d.width, height: d.height,
       rotation: d.rotation || 0,
     });
-    node.setAttr('_asset', d.asset);
+    node.setAttr('_asset', this.logoImageKey(d));
     return node;
   }
   async updateLogoNode(node, d) {
-    const assets = this.assetMapFor(d);
-    if (node.getAttr('_asset') !== d.asset) {
-      const img = await loadImage(assets[d.asset] || assets.full);
+    const key = this.logoImageKey(d);
+    if (node.getAttr('_asset') !== key) {
+      const img = await this.loadLogoImage(d);
       node.image(img || undefined);
-      node.setAttr('_asset', d.asset);
+      node.setAttr('_asset', key);
     }
     node.position({ x: d.x, y: d.y });
     node.size({ width: d.width, height: d.height });

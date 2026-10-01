@@ -1,4 +1,4 @@
-import { getState, loadDocument, addLayer, undo, redo, updateLayer, serializeDocument, setCanvasSize } from './engine/state.js';
+import { getState, loadDocument, addLayer, undo, redo, updateLayer, serializeDocument, setCanvasSize, subscribe } from './engine/state.js';
 import { computeTextTitleGeometry, computeLocationGeometry, computePhotoBadgeGeometry, pinAssetForColor, defaultBodyStickerBox } from './templates/locationGenerator.js';
 import { StageRenderer, exportPNG, exportLayersSeparately } from './engine/stageRenderer.js';
 import { makeTextLayer, makeImageLayer, makeLogoLayer, makePinLayer, makeFrameLayer, makeBackgroundLayer } from './engine/layerFactory.js';
@@ -82,7 +82,7 @@ function regenerateQuick() {
     if (!pin || !text) return;
     const g = computeLocationGeometry(text.text);
     setCanvasSize(g.canvasW, g.canvasH);
-    updateLayer(pin.id, { asset: pinAssetForColor(text.color), x: g.pinX, y: g.pinY, width: g.pinW, height: g.pinH }, { history: false });
+    updateLayer(pin.id, { asset: pinAssetForColor(text.color), tint: text.color || '#ffffff', x: g.pinX, y: g.pinY, width: g.pinW, height: g.pinH }, { history: false });
     updateLayer(text.id, { text: g.cityName, x: g.textX, y: g.textY, width: g.textW, height: g.textH, fontSize: g.fontSize, letterSpacing: g.letterSpacing }, { history: false });
   } else if (mode === 'photoLocation') {
     const pin = state.layers.find((l) => l.type === 'pin');
@@ -91,7 +91,7 @@ function regenerateQuick() {
     const corner = pin.corner || 'bottom-left';
     const scale = pin.scale || 1;
     const g = computePhotoBadgeGeometry(text.text, { corner, canvasW: state.canvas.width, canvasH: state.canvas.height, scale });
-    updateLayer(pin.id, { asset: pinAssetForColor(text.color), corner, scale, x: g.pinX, y: g.pinY, width: g.pinW, height: g.pinH }, { history: false });
+    updateLayer(pin.id, { asset: pinAssetForColor(text.color), tint: text.color || '#ffffff', corner, scale, x: g.pinX, y: g.pinY, width: g.pinW, height: g.pinH }, { history: false });
     updateLayer(text.id, { text: g.cityName, x: g.textX, y: g.textY, width: g.textW, height: g.textH, fontSize: g.fontSize, letterSpacing: g.letterSpacing }, { history: false });
   }
 }
@@ -177,6 +177,20 @@ function populateTemplateList() {
       name.className = 'tpl-name';
       name.textContent = t.name + (t.builtin ? '' : ' (propia)');
       item.appendChild(name);
+      if (workspaces.has(t.id)) {
+        // la plantilla tiene cambios guardados: opción de volver a empezarla
+        const reset = document.createElement('button');
+        reset.className = 'tpl-del';
+        reset.title = 'Empezar de cero esta plantilla';
+        reset.textContent = '↺';
+        reset.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (confirm(`¿Descartar los cambios de "${t.name}" y empezarla de cero?`)) {
+            if (t.id === currentTemplateId) { applyTemplate(t.id, { fresh: true }); closeDrawer(); } else { resetWorkspace(t.id); populateTemplateList(); }
+          }
+        });
+        item.appendChild(reset);
+      }
       if (!t.builtin) {
         const del = document.createElement('button');
         del.className = 'tpl-del';
@@ -185,6 +199,7 @@ function populateTemplateList() {
           e.stopPropagation();
           if (confirm(`¿Eliminar la plantilla "${t.name}"?`)) {
             deleteTemplate(t.id);
+            resetWorkspace(t.id);
             populateTemplateList();
           }
         });
@@ -196,12 +211,59 @@ function populateTemplateList() {
   });
 }
 
-async function applyTemplate(id) {
-  const doc = loadTemplateDoc(id);
+// ---- espacios de trabajo independientes por plantilla ----
+// Cada plantilla guarda su propio diseño en curso: al saltar a otra y volver,
+// recuperas lo que tenías ahí (textos, colores, fotos...) en vez de que una
+// plantilla pise a otra o se pierda el trabajo. Se guarda también en el
+// navegador para que sobreviva a recargar la página.
+const WORKSPACES_KEY = 'rrss_workspaces_v1';
+const LAST_TEMPLATE_KEY = 'rrss_last_template_v1';
+const workspaces = new Map();
+try {
+  const saved = JSON.parse(localStorage.getItem(WORKSPACES_KEY) || '{}');
+  Object.entries(saved).forEach(([id, doc]) => workspaces.set(id, doc));
+} catch { /* almacenamiento no disponible o corrupto: empezamos de cero */ }
+
+let switchingTemplate = false;
+let persistTimer = null;
+function saveCurrentWorkspace() {
+  if (!currentTemplateId || switchingTemplate) return;
+  workspaces.set(currentTemplateId, serializeDocument());
+}
+function persistWorkspaces() {
+  clearTimeout(persistTimer);
+  persistTimer = setTimeout(() => {
+    try {
+      localStorage.setItem(WORKSPACES_KEY, JSON.stringify(Object.fromEntries(workspaces)));
+    } catch {
+      // sin espacio (fotos grandes): se mantiene en memoria mientras la
+      // pestaña siga abierta, pero no se rompe nada
+    }
+  }, 600);
+}
+subscribe(() => {
+  if (switchingTemplate) return;
+  saveCurrentWorkspace();
+  persistWorkspaces();
+});
+window.addEventListener('pagehide', () => { saveCurrentWorkspace(); clearTimeout(persistTimer); try { localStorage.setItem(WORKSPACES_KEY, JSON.stringify(Object.fromEntries(workspaces))); } catch { /* sin espacio */ } });
+
+function resetWorkspace(id) {
+  workspaces.delete(id);
+  persistWorkspaces();
+}
+
+async function applyTemplate(id, { fresh = false } = {}) {
+  if (fresh) resetWorkspace(id);
+  const doc = workspaces.get(id) || loadTemplateDoc(id);
   if (!doc) return;
+  saveCurrentWorkspace(); // lo que había en la plantilla anterior se queda en su espacio
+  switchingTemplate = true;
   currentTemplateId = id;
+  try { localStorage.setItem(LAST_TEMPLATE_KEY, id); } catch { /* ignorar */ }
   templateNameLabel.textContent = doc.templateName || 'Plantilla';
   loadDocument(doc);
+  switchingTemplate = false;
   // en los generadores rápidos no hay capas que navegar: directo al panel
   // único, sin pestañas de Capas/Añadir de por medio
   bottomSheet.classList.toggle('quick-mode', !!doc.quickGenerator);
@@ -269,7 +331,12 @@ async function init() {
     onSelect: async () => { await renderer.render(); refreshLayers(); refreshProps(); openSheet(); switchTab('props'); },
   });
 
-  await applyTemplate('builtin_repost_simple');
+  let startId = 'builtin_repost_simple';
+  try {
+    const last = localStorage.getItem(LAST_TEMPLATE_KEY);
+    if (last && listTemplates().some((t) => t.id === last)) startId = last;
+  } catch { /* ignorar */ }
+  await applyTemplate(startId);
   fitStage();
 
   window.addEventListener('resize', fitStage);
