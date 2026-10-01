@@ -242,8 +242,8 @@ export class StageRenderer {
         this.transformer.nodes([]);
         this.layer.draw();
         return;
-      } else if (selectedData && (selectedData.type === 'logo' || selectedData.type === 'pin')) {
-        // el logo solo se redimensiona por las esquinas y siempre proporcional (no se deforma)
+      } else if (selectedData && (selectedData.type === 'logo' || selectedData.type === 'pin' || selectedData.type === 'image')) {
+        // logos e imágenes: solo por las esquinas y siempre proporcional (escala uniforme, nunca se deforma)
         this.transformer.enabledAnchors(['top-left', 'top-right', 'bottom-left', 'bottom-right']);
         this.transformer.rotateEnabled(true);
         this.transformer.keepRatio(true);
@@ -466,7 +466,7 @@ export class StageRenderer {
     const weight = d.weight || (isTitle ? 800 : (d.bold ? 700 : 400));
     // ancho: explícito (d.widthVariant) > por defecto según rol
     const widthKey = d.widthVariant || (isTitle ? 'extracondensed' : 'normal');
-    const variant = FONT_WIDTH_VARIANTS.find((v) => v.key === widthKey) || FONT_WIDTH_VARIANTS[2];
+    const variant = FONT_WIDTH_VARIANTS.find((v) => v.key === widthKey) || FONT_WIDTH_VARIANTS[3];
     const family = d.italic ? variant.familyItalic : variant.family;
     return { weight, family };
   }
@@ -474,7 +474,7 @@ export class StageRenderer {
     if (!d.autoFit) return d.fontSize || 48;
     const { weight, family } = this.computeFont(d);
     if (d.role !== 'title') {
-      const variant = FONT_WIDTH_VARIANTS.find((v) => v.key === d.widthVariant) || FONT_WIDTH_VARIANTS[2];
+      const variant = FONT_WIDTH_VARIANTS.find((v) => v.key === d.widthVariant) || FONT_WIDTH_VARIANTS[3];
       return fitRichText({
         text: d.text || '',
         box: { width: d.width, height: d.height },
@@ -543,7 +543,7 @@ export class StageRenderer {
     const fontSize = this.resolveFontSize(d);
     const boldWeight = 700;
     const normalWeight = d.bold ? 700 : 400; // "Negrita" global sigue funcionando como peso base
-    const variant = FONT_WIDTH_VARIANTS.find((v) => v.key === d.widthVariant) || FONT_WIDTH_VARIANTS[2];
+    const variant = FONT_WIDTH_VARIANTS.find((v) => v.key === d.widthVariant) || FONT_WIDTH_VARIANTS[3];
     const layout = layoutRichText({
       text: d.text || '',
       box: { width: d.width, height: d.height },
@@ -686,7 +686,7 @@ function hexToRgba(hex, alpha) {
 function hideNonExportable(stageRenderer, state) {
   const hiddenNodes = [];
   for (const l of state.layers) {
-    if (l.exportable === false) {
+    if (l.exportable === false || l.type === 'frame') { // el marco de "compartido" es solo una guía: nunca se exporta
       const node = stageRenderer.nodes.get(l.id);
       if (node && node.visible()) { hiddenNodes.push(node); node.visible(false); }
     }
@@ -733,7 +733,7 @@ export async function exportPNG(stageRenderer) {
 // conserven su posición relativa si luego se recomponen.
 export async function exportLayersSeparately(stageRenderer) {
   const state = getState();
-  const exportableLayers = state.layers.filter((l) => l.exportable !== false && l.visible !== false);
+  const exportableLayers = state.layers.filter((l) => l.exportable !== false && l.visible !== false && l.type !== 'frame');
   const originalVisibility = new Map();
   state.layers.forEach((l) => {
     const node = stageRenderer.nodes.get(l.id);

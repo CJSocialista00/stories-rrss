@@ -7,7 +7,8 @@ import { renderLayerList } from './ui/layerList.js';
 import { renderProps, renderQuickPanel } from './ui/propsPanel.js';
 import { dataURLToBlob, dataURLToUint8Array, downloadBlob } from './lib/download.js';
 import { createZip } from './lib/zip.js';
-import { COLORS } from './engine/constants.js';
+import { COLORS, FONT_FAMILY_TITLE_ITALIC } from './engine/constants.js';
+import { fontSpecsForState, ensureFonts } from './engine/fonts.js';
 
 const BRAND_COLORS = [COLORS.white, COLORS.red, COLORS.black].map((c) => c.toLowerCase());
 
@@ -25,19 +26,9 @@ let renderer;
 let currentTemplateId = null;
 
 async function waitFonts() {
-  try {
-    // cargamos TODAS las @font-face declaradas (normal + itálica de cada
-    // ancho: Variable/Condensed/Semicondensed/Wide), en vez de intentar
-    // enumerar a mano cada combinación de peso/estilo que se vaya a usar —
-    // eso se quedaba desactualizado cada vez que añadíamos un estilo nuevo
-    // y provocaba que el navegador usara una tipografía de reserva (p.ej.
-    // Times New Roman) mientras la real cargaba en segundo plano sin que
-    // el lienzo se volviera a dibujar.
-    const loads = [];
-    document.fonts.forEach((fontFace) => loads.push(fontFace.load().catch(() => {})));
-    await Promise.all(loads);
-    await document.fonts.ready;
-  } catch { /* fuentes ya listas o navegador sin soporte de la API */ }
+  // solo la tipografía de marca (ubicación/título: ExtraCondensed Black
+  // Itálica); el resto se carga bajo demanda con ensureFonts()
+  await ensureFonts([`italic 800 100px "${FONT_FAMILY_TITLE_ITALIC}"`]);
 }
 
 // Generadores rápidos (sticker de texto, de ubicación, foto con ubicación):
@@ -125,6 +116,7 @@ function refreshCanvas() {
   if (refreshCanvasFrame !== null) return;
   refreshCanvasFrame = requestAnimationFrame(async () => {
     refreshCanvasFrame = null;
+    await ensureFonts(fontSpecsForState(getState()));
     regenerateQuick();
     updatePreviewBackground();
     await renderer.render();
@@ -160,6 +152,7 @@ function refreshLayers() {
 }
 
 async function refreshAll() {
+  await ensureFonts(fontSpecsForState(getState()));
   regenerateQuick();
   updatePreviewBackground();
   await renderer.render();
@@ -351,6 +344,30 @@ function readImageScaled(file) {
   });
 }
 
+// Instagram muestra como un recuadro BLANCO la transparencia de los PNG de
+// sticker muy alargados y ajustados al texto (pasaba igual desde Photoshop).
+// Con una caja transparente más grande alrededor sí la respeta, así que los
+// stickers se exportan centrados en un lienzo cuadrado transparente.
+const STICKER_MODES = ['title', 'body', 'location'];
+function padStickerToSquare(dataURL) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onerror = reject;
+    img.onload = () => {
+      const side = Math.max(img.width, img.height);
+      const c = document.createElement('canvas');
+      c.width = side;
+      c.height = side;
+      c.getContext('2d').drawImage(img, Math.round((side - img.width) / 2), Math.round((side - img.height) / 2));
+      resolve(c.toDataURL('image/png'));
+    };
+    img.src = dataURL;
+  });
+}
+async function finalizeExport(dataURL) {
+  return STICKER_MODES.includes(getState().quickGenerator) ? padStickerToSquare(dataURL) : dataURL;
+}
+
 async function init() {
   await waitFonts();
 
@@ -438,7 +455,7 @@ async function init() {
   document.getElementById('btnExportSingle').addEventListener('click', async () => {
     exportMenu.classList.add('hidden');
     try {
-      const dataURL = await exportPNG(renderer);
+      const dataURL = await finalizeExport(await exportPNG(renderer));
       downloadBlob(dataURLToBlob(dataURL), `story_${Date.now()}.png`);
     } catch (err) {
       console.error('Error exportando PNG', err);
@@ -450,6 +467,7 @@ async function init() {
     exportMenu.classList.add('hidden');
     try {
       const layers = await exportLayersSeparately(renderer);
+      for (const l of layers) l.dataURL = await finalizeExport(l.dataURL);
       const stamp = Date.now();
       const files = layers.map((l, i) => ({
         name: `${String(i + 1).padStart(2, '0')}_${slugify(l.name)}.png`,

@@ -8,26 +8,33 @@ export const COLORS = {
   white: '#ffffff',
 };
 
-// Cuerpo: familia de ancho normal (wdth=100, valor por defecto del archivo).
-export const FONT_FAMILY = 'Acumin Variable';
-export const FONT_FAMILY_ITALIC = 'Acumin Variable Italic';
-// Título: familia con el ancho fijado a ExtraCondensed (wdth=50) vía @font-face.
-export const FONT_FAMILY_TITLE = 'Acumin Condensed';
-export const FONT_FAMILY_TITLE_ITALIC = 'Acumin Condensed Italic';
+// Tipografía: instancias estáticas reales de Acumin Variable (src/fonts.css).
+// Cada ancho es una familia con sus 9 pesos en normal y en cursiva REAL; la
+// cursiva se pide con "italic" en el string de fuente y el navegador usa esa
+// variante (no inclina artificialmente).
+export const FONT_FAMILY = 'CJS Acumin';
+export const FONT_FAMILY_ITALIC = 'CJS Acumin';
+export const FONT_FAMILY_TITLE = 'CJS Acumin ExtraCondensed';
+export const FONT_FAMILY_TITLE_ITALIC = 'CJS Acumin ExtraCondensed';
 
-// Variantes de ancho adicionales para el sticker de texto en modo "Cuerpo"
-// (libertad de estilo dentro de Acumin Variable).
 export const FONT_WIDTH_VARIANTS = [
-  { key: 'extracondensed', label: 'Extra condensada', family: 'Acumin Condensed', familyItalic: 'Acumin Condensed Italic' },
-  { key: 'condensed', label: 'Condensada', family: 'Acumin Semicondensed', familyItalic: 'Acumin Semicondensed Italic' },
-  { key: 'normal', label: 'Normal', family: 'Acumin Variable', familyItalic: 'Acumin Variable Italic' },
-  { key: 'wide', label: 'Ancha', family: 'Acumin Wide', familyItalic: 'Acumin Wide Italic' },
+  { key: 'extracondensed', label: 'Extra condensada', family: 'CJS Acumin ExtraCondensed', familyItalic: 'CJS Acumin ExtraCondensed' },
+  { key: 'condensed', label: 'Condensada', family: 'CJS Acumin Condensed', familyItalic: 'CJS Acumin Condensed' },
+  { key: 'semicondensed', label: 'Semicondensada', family: 'CJS Acumin SemiCondensed', familyItalic: 'CJS Acumin SemiCondensed' },
+  { key: 'normal', label: 'Normal', family: 'CJS Acumin', familyItalic: 'CJS Acumin' },
+  { key: 'wide', label: 'Ancha', family: 'CJS Acumin Wide', familyItalic: 'CJS Acumin Wide' },
 ];
 
 export const FONT_WEIGHT_VARIANTS = [
+  { key: 'thin', label: 'Thin', weight: 100 },
+  { key: 'extralight', label: 'ExtraLight', weight: 200 },
+  { key: 'light', label: 'Light', weight: 300 },
   { key: 'regular', label: 'Regular', weight: 400 },
-  { key: 'bold', label: 'Negrita', weight: 700 },
+  { key: 'medium', label: 'Medium', weight: 500 },
+  { key: 'semibold', label: 'Semibold', weight: 600 },
+  { key: 'bold', label: 'Bold', weight: 700 },
   { key: 'black', label: 'Black', weight: 800 },
+  { key: 'ultrablack', label: 'UltraBlack', weight: 900 },
 ];
 
 // Proporciones estándar de publicaciones de Instagram para el marco de "compartido"

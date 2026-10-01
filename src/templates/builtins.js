@@ -10,6 +10,7 @@ function repostSimple() {
   return {
     canvas: { width: CANVAS_W, height: CANVAS_H },
     templateName: 'Repost · Título y cuerpo debajo',
+    templateVersion: 2,
     layers: [
       makeFrameLayer({
         name: 'Marco compartido (guía)',
@@ -30,7 +31,7 @@ function repostSimple() {
       }),
       makeTextLayer({
         name: 'Cuerpo', role: 'body',
-        text: 'Texto de cuerpo explicando la publicación compartida y el contexto de la story.',
+        text: 'Texto de cuerpo explicando la publicación compartida y **el contexto de la story** (lo que va entre dobles asteriscos sale en negrita).',
         x: MARGIN, y: 140 + imgH + 250, width: CANVAS_W - MARGIN * 2, height: 420,
         color: COLORS.white, autoFit: false, fontSize: 44,
       }),
@@ -46,6 +47,7 @@ function repostShared() {
   return {
     canvas: { width: CANVAS_W, height: CANVAS_H },
     templateName: 'Repost · Título + publicación + cuerpo',
+    templateVersion: 2,
     layers: [
       makeTextLayer({
         name: 'Título', role: 'title',
@@ -60,7 +62,7 @@ function repostShared() {
       }),
       makeTextLayer({
         name: 'Cuerpo', role: 'body',
-        text: 'Texto de cuerpo con el contexto y la reflexión sobre la publicación compartida.',
+        text: 'Texto de cuerpo con el contexto y **la reflexión** sobre la publicación compartida.',
         x: MARGIN, y: frameY + frameH + 50, width: CANVAS_W - MARGIN * 2, height: 400,
         color: COLORS.white, autoFit: false, fontSize: 44,
       }),
@@ -76,20 +78,22 @@ function repostShared() {
 
 // 3) Artículo (plantilla fija): título principal + subtítulo (desactivable) +
 //    portada + cuerpo autoajustable + hueco enlace + logos
-export const ARTICLE_TITLE_Y = 80;
+// arranca por debajo de la zona que tapa la barra superior de Instagram
+// (barras de progreso + avatar/nombre, ~200px de 1920)
+export const ARTICLE_TITLE_Y = 230;
 export const ARTICLE_SUBTITLE_GAP = 12;
 function articleFixed() {
-  const titleH = 170;
+  const titleH = 160;
   const subtitleY = ARTICLE_TITLE_Y + titleH + ARTICLE_SUBTITLE_GAP;
-  const subtitleH = 110;
+  const subtitleH = 100;
   const coverY = subtitleY + subtitleH + 28;
-  const coverH = 690;
+  const coverH = 640;
   return {
     canvas: { width: CANVAS_W, height: CANVAS_H },
     templateName: 'Artículo (fija)',
     // al cambiar la estructura de esta plantilla se sube la versión para que
     // los espacios de trabajo guardados con la estructura vieja se descarten
-    templateVersion: 2,
+    templateVersion: 3,
     layers: [
       makeBackgroundLayer({
         name: 'Fondo', x: 0, y: 0, width: CANVAS_W, height: CANVAS_H, color: '#ffffff',
@@ -113,8 +117,8 @@ function articleFixed() {
       }),
       makeTextLayer({
         name: 'Cuerpo', role: 'body',
-        text: 'Resumen o entradilla del artículo que se autoajusta para que la foto de portada nunca pierda espacio.',
-        x: MARGIN, y: coverY + coverH + 40, width: CANVAS_W - MARGIN * 2, height: 260,
+        text: 'Resumen o entradilla del artículo con **una idea clave en negrita**, que se autoajusta para que la foto de portada nunca pierda espacio.',
+        x: MARGIN, y: coverY + coverH + 36, width: CANVAS_W - MARGIN * 2, height: 260,
         color: COLORS.black, autoFit: true,
       }),
       makeTextLayer({

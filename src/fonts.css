@@ -1,0 +1,94 @@
+/* Generado a partir de AcuminVariableConcept.otf: las 90 instancias reales
+   (5 anchos × 9 pesos × normal/cursiva) como fuentes estáticas. La cursiva
+   es la variante cursiva real de la fuente, no una inclinación artificial.
+   font-display: block + carga bajo demanda desde JS (ver engine/fonts.js). */
+@font-face { font-family: 'CJS Acumin ExtraCondensed'; src: url('../assets/fonts/acumin/acumin-extracondensed-100-normal.woff') format('woff'); font-weight: 100; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin ExtraCondensed'; src: url('../assets/fonts/acumin/acumin-extracondensed-100-italic.woff') format('woff'); font-weight: 100; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin ExtraCondensed'; src: url('../assets/fonts/acumin/acumin-extracondensed-200-normal.woff') format('woff'); font-weight: 200; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin ExtraCondensed'; src: url('../assets/fonts/acumin/acumin-extracondensed-200-italic.woff') format('woff'); font-weight: 200; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin ExtraCondensed'; src: url('../assets/fonts/acumin/acumin-extracondensed-300-normal.woff') format('woff'); font-weight: 300; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin ExtraCondensed'; src: url('../assets/fonts/acumin/acumin-extracondensed-300-italic.woff') format('woff'); font-weight: 300; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin ExtraCondensed'; src: url('../assets/fonts/acumin/acumin-extracondensed-400-normal.woff') format('woff'); font-weight: 400; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin ExtraCondensed'; src: url('../assets/fonts/acumin/acumin-extracondensed-400-italic.woff') format('woff'); font-weight: 400; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin ExtraCondensed'; src: url('../assets/fonts/acumin/acumin-extracondensed-500-normal.woff') format('woff'); font-weight: 500; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin ExtraCondensed'; src: url('../assets/fonts/acumin/acumin-extracondensed-500-italic.woff') format('woff'); font-weight: 500; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin ExtraCondensed'; src: url('../assets/fonts/acumin/acumin-extracondensed-600-normal.woff') format('woff'); font-weight: 600; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin ExtraCondensed'; src: url('../assets/fonts/acumin/acumin-extracondensed-600-italic.woff') format('woff'); font-weight: 600; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin ExtraCondensed'; src: url('../assets/fonts/acumin/acumin-extracondensed-700-normal.woff') format('woff'); font-weight: 700; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin ExtraCondensed'; src: url('../assets/fonts/acumin/acumin-extracondensed-700-italic.woff') format('woff'); font-weight: 700; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin ExtraCondensed'; src: url('../assets/fonts/acumin/acumin-extracondensed-800-normal.woff') format('woff'); font-weight: 800; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin ExtraCondensed'; src: url('../assets/fonts/acumin/acumin-extracondensed-800-italic.woff') format('woff'); font-weight: 800; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin ExtraCondensed'; src: url('../assets/fonts/acumin/acumin-extracondensed-900-normal.woff') format('woff'); font-weight: 900; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin ExtraCondensed'; src: url('../assets/fonts/acumin/acumin-extracondensed-900-italic.woff') format('woff'); font-weight: 900; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin Condensed'; src: url('../assets/fonts/acumin/acumin-condensed-100-normal.woff') format('woff'); font-weight: 100; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin Condensed'; src: url('../assets/fonts/acumin/acumin-condensed-100-italic.woff') format('woff'); font-weight: 100; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin Condensed'; src: url('../assets/fonts/acumin/acumin-condensed-200-normal.woff') format('woff'); font-weight: 200; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin Condensed'; src: url('../assets/fonts/acumin/acumin-condensed-200-italic.woff') format('woff'); font-weight: 200; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin Condensed'; src: url('../assets/fonts/acumin/acumin-condensed-300-normal.woff') format('woff'); font-weight: 300; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin Condensed'; src: url('../assets/fonts/acumin/acumin-condensed-300-italic.woff') format('woff'); font-weight: 300; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin Condensed'; src: url('../assets/fonts/acumin/acumin-condensed-400-normal.woff') format('woff'); font-weight: 400; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin Condensed'; src: url('../assets/fonts/acumin/acumin-condensed-400-italic.woff') format('woff'); font-weight: 400; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin Condensed'; src: url('../assets/fonts/acumin/acumin-condensed-500-normal.woff') format('woff'); font-weight: 500; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin Condensed'; src: url('../assets/fonts/acumin/acumin-condensed-500-italic.woff') format('woff'); font-weight: 500; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin Condensed'; src: url('../assets/fonts/acumin/acumin-condensed-600-normal.woff') format('woff'); font-weight: 600; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin Condensed'; src: url('../assets/fonts/acumin/acumin-condensed-600-italic.woff') format('woff'); font-weight: 600; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin Condensed'; src: url('../assets/fonts/acumin/acumin-condensed-700-normal.woff') format('woff'); font-weight: 700; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin Condensed'; src: url('../assets/fonts/acumin/acumin-condensed-700-italic.woff') format('woff'); font-weight: 700; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin Condensed'; src: url('../assets/fonts/acumin/acumin-condensed-800-normal.woff') format('woff'); font-weight: 800; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin Condensed'; src: url('../assets/fonts/acumin/acumin-condensed-800-italic.woff') format('woff'); font-weight: 800; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin Condensed'; src: url('../assets/fonts/acumin/acumin-condensed-900-normal.woff') format('woff'); font-weight: 900; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin Condensed'; src: url('../assets/fonts/acumin/acumin-condensed-900-italic.woff') format('woff'); font-weight: 900; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin SemiCondensed'; src: url('../assets/fonts/acumin/acumin-semicondensed-100-normal.woff') format('woff'); font-weight: 100; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin SemiCondensed'; src: url('../assets/fonts/acumin/acumin-semicondensed-100-italic.woff') format('woff'); font-weight: 100; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin SemiCondensed'; src: url('../assets/fonts/acumin/acumin-semicondensed-200-normal.woff') format('woff'); font-weight: 200; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin SemiCondensed'; src: url('../assets/fonts/acumin/acumin-semicondensed-200-italic.woff') format('woff'); font-weight: 200; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin SemiCondensed'; src: url('../assets/fonts/acumin/acumin-semicondensed-300-normal.woff') format('woff'); font-weight: 300; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin SemiCondensed'; src: url('../assets/fonts/acumin/acumin-semicondensed-300-italic.woff') format('woff'); font-weight: 300; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin SemiCondensed'; src: url('../assets/fonts/acumin/acumin-semicondensed-400-normal.woff') format('woff'); font-weight: 400; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin SemiCondensed'; src: url('../assets/fonts/acumin/acumin-semicondensed-400-italic.woff') format('woff'); font-weight: 400; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin SemiCondensed'; src: url('../assets/fonts/acumin/acumin-semicondensed-500-normal.woff') format('woff'); font-weight: 500; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin SemiCondensed'; src: url('../assets/fonts/acumin/acumin-semicondensed-500-italic.woff') format('woff'); font-weight: 500; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin SemiCondensed'; src: url('../assets/fonts/acumin/acumin-semicondensed-600-normal.woff') format('woff'); font-weight: 600; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin SemiCondensed'; src: url('../assets/fonts/acumin/acumin-semicondensed-600-italic.woff') format('woff'); font-weight: 600; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin SemiCondensed'; src: url('../assets/fonts/acumin/acumin-semicondensed-700-normal.woff') format('woff'); font-weight: 700; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin SemiCondensed'; src: url('../assets/fonts/acumin/acumin-semicondensed-700-italic.woff') format('woff'); font-weight: 700; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin SemiCondensed'; src: url('../assets/fonts/acumin/acumin-semicondensed-800-normal.woff') format('woff'); font-weight: 800; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin SemiCondensed'; src: url('../assets/fonts/acumin/acumin-semicondensed-800-italic.woff') format('woff'); font-weight: 800; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin SemiCondensed'; src: url('../assets/fonts/acumin/acumin-semicondensed-900-normal.woff') format('woff'); font-weight: 900; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin SemiCondensed'; src: url('../assets/fonts/acumin/acumin-semicondensed-900-italic.woff') format('woff'); font-weight: 900; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin'; src: url('../assets/fonts/acumin/acumin-normal-100-normal.woff') format('woff'); font-weight: 100; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin'; src: url('../assets/fonts/acumin/acumin-normal-100-italic.woff') format('woff'); font-weight: 100; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin'; src: url('../assets/fonts/acumin/acumin-normal-200-normal.woff') format('woff'); font-weight: 200; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin'; src: url('../assets/fonts/acumin/acumin-normal-200-italic.woff') format('woff'); font-weight: 200; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin'; src: url('../assets/fonts/acumin/acumin-normal-300-normal.woff') format('woff'); font-weight: 300; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin'; src: url('../assets/fonts/acumin/acumin-normal-300-italic.woff') format('woff'); font-weight: 300; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin'; src: url('../assets/fonts/acumin/acumin-normal-400-normal.woff') format('woff'); font-weight: 400; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin'; src: url('../assets/fonts/acumin/acumin-normal-400-italic.woff') format('woff'); font-weight: 400; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin'; src: url('../assets/fonts/acumin/acumin-normal-500-normal.woff') format('woff'); font-weight: 500; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin'; src: url('../assets/fonts/acumin/acumin-normal-500-italic.woff') format('woff'); font-weight: 500; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin'; src: url('../assets/fonts/acumin/acumin-normal-600-normal.woff') format('woff'); font-weight: 600; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin'; src: url('../assets/fonts/acumin/acumin-normal-600-italic.woff') format('woff'); font-weight: 600; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin'; src: url('../assets/fonts/acumin/acumin-normal-700-normal.woff') format('woff'); font-weight: 700; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin'; src: url('../assets/fonts/acumin/acumin-normal-700-italic.woff') format('woff'); font-weight: 700; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin'; src: url('../assets/fonts/acumin/acumin-normal-800-normal.woff') format('woff'); font-weight: 800; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin'; src: url('../assets/fonts/acumin/acumin-normal-800-italic.woff') format('woff'); font-weight: 800; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin'; src: url('../assets/fonts/acumin/acumin-normal-900-normal.woff') format('woff'); font-weight: 900; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin'; src: url('../assets/fonts/acumin/acumin-normal-900-italic.woff') format('woff'); font-weight: 900; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin Wide'; src: url('../assets/fonts/acumin/acumin-wide-100-normal.woff') format('woff'); font-weight: 100; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin Wide'; src: url('../assets/fonts/acumin/acumin-wide-100-italic.woff') format('woff'); font-weight: 100; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin Wide'; src: url('../assets/fonts/acumin/acumin-wide-200-normal.woff') format('woff'); font-weight: 200; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin Wide'; src: url('../assets/fonts/acumin/acumin-wide-200-italic.woff') format('woff'); font-weight: 200; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin Wide'; src: url('../assets/fonts/acumin/acumin-wide-300-normal.woff') format('woff'); font-weight: 300; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin Wide'; src: url('../assets/fonts/acumin/acumin-wide-300-italic.woff') format('woff'); font-weight: 300; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin Wide'; src: url('../assets/fonts/acumin/acumin-wide-400-normal.woff') format('woff'); font-weight: 400; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin Wide'; src: url('../assets/fonts/acumin/acumin-wide-400-italic.woff') format('woff'); font-weight: 400; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin Wide'; src: url('../assets/fonts/acumin/acumin-wide-500-normal.woff') format('woff'); font-weight: 500; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin Wide'; src: url('../assets/fonts/acumin/acumin-wide-500-italic.woff') format('woff'); font-weight: 500; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin Wide'; src: url('../assets/fonts/acumin/acumin-wide-600-normal.woff') format('woff'); font-weight: 600; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin Wide'; src: url('../assets/fonts/acumin/acumin-wide-600-italic.woff') format('woff'); font-weight: 600; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin Wide'; src: url('../assets/fonts/acumin/acumin-wide-700-normal.woff') format('woff'); font-weight: 700; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin Wide'; src: url('../assets/fonts/acumin/acumin-wide-700-italic.woff') format('woff'); font-weight: 700; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin Wide'; src: url('../assets/fonts/acumin/acumin-wide-800-normal.woff') format('woff'); font-weight: 800; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin Wide'; src: url('../assets/fonts/acumin/acumin-wide-800-italic.woff') format('woff'); font-weight: 800; font-style: italic; font-display: block; }
+@font-face { font-family: 'CJS Acumin Wide'; src: url('../assets/fonts/acumin/acumin-wide-900-normal.woff') format('woff'); font-weight: 900; font-style: normal; font-display: block; }
+@font-face { font-family: 'CJS Acumin Wide'; src: url('../assets/fonts/acumin/acumin-wide-900-italic.woff') format('woff'); font-weight: 900; font-style: italic; font-display: block; }

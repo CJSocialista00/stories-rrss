@@ -158,6 +158,8 @@ export function renderProps(container, layerId, { onChange, onRemove } = {}) {
   };
 
   const isLogo = layer.type === 'logo' || layer.type === 'pin';
+  // logos e imágenes se escalan siempre de forma uniforme (un solo slider)
+  const isUniform = isLogo || layer.type === 'image';
   const isBackground = layer.type === 'background';
   const isFixedBlock = isFrame || isBackground || layer.locked === true; // sin arrastre/asas: solo controles del panel
 
@@ -190,10 +192,11 @@ export function renderProps(container, layerId, { onChange, onRemove } = {}) {
       gTransform.appendChild(row('Y', rangeWithNumber(-200, 2200, 1, layer.y, (v) => patch({ y: v }))));
     }
 
-    if (isLogo && !isFixedBlock) {
-      // un único slider de tamaño: escala ancho y alto a la vez para no deformar el logo
+    if (isUniform && !isFixedBlock) {
+      // un único slider de tamaño: escala ancho y alto a la vez para no deformar
       const aspect = layer.height / layer.width;
-      gTransform.appendChild(row('Tamaño', rangeWithNumber(20, 600, 1, layer.width, (v) => patch({ width: v, height: v * aspect }))));
+      const maxW = isLogo ? 600 : Math.max(1400, Math.round(CANVAS_W_ * 1.5));
+      gTransform.appendChild(row('Tamaño', rangeWithNumber(20, maxW, 1, Math.round(layer.width), (v) => patch({ width: v, height: v * aspect }))));
     } else if (!isFixedBlock && !isLogo) {
       gTransform.appendChild(row('Ancho', rangeWithNumber(10, 1400, 1, layer.width, (v) => patch({ width: v }))));
       gTransform.appendChild(row('Alto', rangeWithNumber(10, 2200, 1, layer.height, (v) => patch({ height: v }))));
@@ -366,10 +369,10 @@ export function renderProps(container, layerId, { onChange, onRemove } = {}) {
 
       const widthLabel = document.createElement('p');
       widthLabel.className = 'hint';
-      widthLabel.textContent = 'Ancho de letra (Acumin Variable):';
+      widthLabel.textContent = 'Ancho de letra:';
       g.appendChild(widthLabel);
       const widthRow = document.createElement('div');
-      widthRow.className = 'toggle-row';
+      widthRow.className = 'toggle-row wrap';
       FONT_WIDTH_VARIANTS.forEach((variant) => {
         const b2 = document.createElement('button');
         b2.textContent = variant.label;
@@ -384,7 +387,7 @@ export function renderProps(container, layerId, { onChange, onRemove } = {}) {
       weightLabel.textContent = 'Peso de letra:';
       g.appendChild(weightLabel);
       const weightRow = document.createElement('div');
-      weightRow.className = 'toggle-row';
+      weightRow.className = 'toggle-row wrap';
       const currentWeight = layer.weight || (isTitleSticker ? 800 : (layer.bold ? 700 : 400));
       FONT_WEIGHT_VARIANTS.forEach((variant) => {
         const b3 = document.createElement('button');
@@ -637,7 +640,7 @@ export function renderProps(container, layerId, { onChange, onRemove } = {}) {
     g.innerHTML = '<strong>Marco de publicación compartida</strong>';
     const p = document.createElement('p');
     p.className = 'hint';
-    p.textContent = 'Guía visual: no se incluye en el PNG exportado (a menos que lo actives abajo). Sirve para diseñar respetando el hueco donde Instagram colocará la publicación compartida.';
+    p.textContent = 'Guía visual: nunca se incluye en el PNG exportado. Sirve para diseñar respetando el hueco donde Instagram colocará la publicación compartida.';
     g.appendChild(p);
 
     const grid = document.createElement('div');
@@ -698,7 +701,7 @@ export function renderProps(container, layerId, { onChange, onRemove } = {}) {
   if (topQuickMode !== 'title') {
     container.appendChild(buildTransformGroup());
   }
-  if (!topQuickMode) {
+  if (!topQuickMode && !isFrame) { // el marco nunca se exporta: sin opción
     container.appendChild(buildExportGroup());
   }
 
