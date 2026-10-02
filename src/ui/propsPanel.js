@@ -365,7 +365,7 @@ export function renderProps(container, layerId, { onChange, onRemove } = {}) {
       const italicBtn = document.createElement('button');
       italicBtn.textContent = layer.italic ? 'Cursiva ✓' : 'Cursiva';
       if (layer.italic) italicBtn.classList.add('active');
-      italicBtn.addEventListener('click', () => { patch({ italic: !layer.italic }); renderProps(container, layerId, { onChange, onRemove }); });
+      italicBtn.addEventListener('click', () => { patch({ italic: !(getLayer(layerId) || layer).italic }); renderProps(container, layerId, { onChange, onRemove }); });
       styleToggle.appendChild(italicBtn);
       g.appendChild(styleToggle);
 
@@ -410,7 +410,7 @@ export function renderProps(container, layerId, { onChange, onRemove } = {}) {
       const italicBtn = document.createElement('button');
       italicBtn.textContent = layer.italic ? 'Cursiva ✓' : 'Cursiva';
       if (layer.italic) italicBtn.classList.add('active');
-      italicBtn.addEventListener('click', () => { patch({ italic: !layer.italic }); renderProps(container, layerId, { onChange, onRemove }); });
+      italicBtn.addEventListener('click', () => { patch({ italic: !(getLayer(layerId) || layer).italic }); renderProps(container, layerId, { onChange, onRemove }); });
       styleToggle.appendChild(italicBtn);
       g.appendChild(styleToggle);
     }
@@ -462,7 +462,7 @@ export function renderProps(container, layerId, { onChange, onRemove } = {}) {
       const afBtn = document.createElement('button');
       afBtn.textContent = layer.autoFit ? 'Autoajuste ✓' : 'Autoajuste';
       if (layer.autoFit) afBtn.classList.add('active');
-      afBtn.addEventListener('click', () => { patch({ autoFit: !layer.autoFit }); renderProps(container, layerId, { onChange, onRemove }); });
+      afBtn.addEventListener('click', () => { patch({ autoFit: !(getLayer(layerId) || layer).autoFit }); renderProps(container, layerId, { onChange, onRemove }); });
       autoFitToggle.appendChild(afBtn);
       g.appendChild(autoFitToggle);
 

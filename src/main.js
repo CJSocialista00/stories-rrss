@@ -168,12 +168,16 @@ function refreshLayers() {
 }
 
 async function refreshAll() {
+  // El panel y la lista de capas se pintan YA con el estado nuevo; antes se
+  // esperaba a descargar las fuentes y, mientras tanto (1-2 s en el móvil),
+  // seguían en pantalla los botones de la plantilla anterior, desconectados:
+  // las pulsaciones se perdían y había que pulsar varias veces o recargar.
+  refreshLayers();
+  refreshProps();
   await ensureFontsFor(getState);
   regenerateQuick();
   updatePreviewBackground();
   await renderer.render();
-  refreshLayers();
-  refreshProps();
   if (getState().quickGenerator) fitStage();
 }
 
