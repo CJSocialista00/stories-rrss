@@ -9,7 +9,7 @@ import { dataURLToBlob, dataURLToUint8Array, downloadBlob } from './lib/download
 import { createZip } from './lib/zip.js';
 import { COLORS, FONT_FAMILY_TITLE_ITALIC, FONT_WIDTH_VARIANTS } from './engine/constants.js';
 import { layoutRichText, bodyWeights } from './engine/richText.js';
-import { fontSpecsForState, ensureFonts } from './engine/fonts.js';
+import { ensureFonts, ensureFontsFor } from './engine/fonts.js';
 
 const BRAND_COLORS = [COLORS.white, COLORS.red, COLORS.black].map((c) => c.toLowerCase());
 
@@ -132,7 +132,7 @@ function refreshCanvas() {
   if (refreshCanvasFrame !== null) return;
   refreshCanvasFrame = requestAnimationFrame(async () => {
     refreshCanvasFrame = null;
-    await ensureFonts(fontSpecsForState(getState()));
+    await ensureFontsFor(getState);
     regenerateQuick();
     updatePreviewBackground();
     await renderer.render();
@@ -168,7 +168,7 @@ function refreshLayers() {
 }
 
 async function refreshAll() {
-  await ensureFonts(fontSpecsForState(getState()));
+  await ensureFontsFor(getState);
   regenerateQuick();
   updatePreviewBackground();
   await renderer.render();
@@ -401,6 +401,15 @@ async function init() {
   fitStage();
 
   window.addEventListener('resize', fitStage);
+
+  // red de seguridad: si una fuente termina de llegar por cualquier vía, se
+  // vuelve a medir y dibujar (nunca se queda pegado en la fuente de reserva)
+  if (document.fonts && document.fonts.addEventListener) {
+    document.fonts.addEventListener('loadingdone', () => {
+      renderer.remeasureText();
+      refreshCanvas();
+    });
+  }
 
   // ---- zoom ----
   document.getElementById('btnZoomIn').addEventListener('click', () => zoomBy(1.25));

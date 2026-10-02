@@ -2,6 +2,7 @@ import { getState, updateLayer, selectLayer, pushHistory } from './state.js';
 import { CANVAS_W, CANVAS_H, FONT_FAMILY, FONT_FAMILY_ITALIC, FONT_FAMILY_TITLE, FONT_FAMILY_TITLE_ITALIC, FONT_WIDTH_VARIANTS } from './constants.js';
 import { fitTextToBox } from './textFit.js';
 import { layoutRichText, fitRichText, bodyWeights } from './richText.js';
+import { ensureFontsFor } from './fonts.js';
 
 const imageCache = new Map();
 function loadImage(src) {
@@ -188,7 +189,17 @@ export class StageRenderer {
     return this._renderPromise;
   }
 
+  // Konva guarda las medidas de cada texto (ancho, saltos de línea) cuando
+  // cambian sus atributos; si se midió con la fuente de reserva (Times) y
+  // luego llega la buena, hay que forzar que vuelva a medir.
+  remeasureText() {
+    this.layer.find('Text').forEach((t) => { if (t._setTextData) t._setTextData(); });
+    this.layer.batchDraw();
+  }
+
   async renderOnce() {
+    // nunca se dibuja con una tipografía sin descargar (saldría Times New Roman)
+    if (await ensureFontsFor(getState)) this.remeasureText();
     const state = getState();
     const seen = new Set();
 
