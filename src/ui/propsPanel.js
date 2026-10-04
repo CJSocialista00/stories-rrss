@@ -127,6 +127,57 @@ function setArticleSubtitle(enabled) {
   updateLayer(mainTitle.id, { height: Math.max(40, height) }, { history: false });
 }
 
+// Panel de una galería de stickers ya hechos: miniaturas para elegir cuál se
+// ve en el lienzo y botones para descargar el archivo original (uno o todos).
+export function renderGalleryPanel(container, { gallery, currentKey, onSelect, onDownload, onDownloadAll }) {
+  container.innerHTML = '';
+  const g = document.createElement('div');
+  g.className = 'prop-group';
+  const hint = document.createElement('p');
+  hint.className = 'hint';
+  hint.textContent = 'Stickers ya diseñados: elige uno y descárgalo tal cual, listo para subir a Instagram.';
+  g.appendChild(hint);
+
+  const grid = document.createElement('div');
+  grid.className = 'gallery-grid';
+  gallery.items.forEach((item) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'gallery-item' + (item.key === currentKey ? ' active' : '');
+    const img = document.createElement('img');
+    img.src = item.src;
+    img.alt = item.label;
+    const label = document.createElement('span');
+    label.textContent = item.label;
+    b.appendChild(img);
+    b.appendChild(label);
+    b.addEventListener('click', () => onSelect(item.key));
+    grid.appendChild(b);
+  });
+  g.appendChild(grid);
+
+  const dl = document.createElement('button');
+  dl.type = 'button';
+  dl.className = 'btn';
+  dl.style.width = '100%';
+  dl.style.marginTop = '12px';
+  dl.textContent = '⬇ Descargar este sticker';
+  dl.addEventListener('click', onDownload);
+  g.appendChild(dl);
+
+  if (gallery.items.length > 1) {
+    const all = document.createElement('button');
+    all.type = 'button';
+    all.className = 'btn';
+    all.style.width = '100%';
+    all.style.marginTop = '8px';
+    all.textContent = `⬇ Descargar todos (${gallery.items.length}, ZIP)`;
+    all.addEventListener('click', onDownloadAll);
+    g.appendChild(all);
+  }
+  container.appendChild(g);
+}
+
 export function renderProps(container, layerId, { onChange, onRemove } = {}) {
   container.innerHTML = '';
   if (!layerId) {

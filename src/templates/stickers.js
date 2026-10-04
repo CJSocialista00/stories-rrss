@@ -1,3 +1,4 @@
+import { buildGalleryDoc } from './gallery.js';
 import { buildTextTitleDoc, buildTextBodyDoc, buildTextBodyPillDoc, buildLocationStickerDoc, buildPhotoLocationDoc } from './locationGenerator.js';
 
 // Plantillas de arranque para los generadores rápidos. El contenido real se
@@ -9,6 +10,7 @@ export const STICKER_TEMPLATES = [
   { id: 'sticker_body', name: 'Sticker · Cuerpo', builtin: true, category: 'Stickers', doc: () => buildTextBodyDoc() },
   { id: 'sticker_body_pill', name: 'Sticker · Cuerpo con fondo', builtin: true, category: 'Stickers', doc: () => buildTextBodyPillDoc() },
   { id: 'sticker_location', name: 'Sticker · Ubicación', builtin: true, category: 'Stickers', doc: () => buildLocationStickerDoc('MADRID') },
+  { id: 'sticker_militar', name: 'Sticker · ¿Quieres militar?', builtin: true, category: 'Stickers', doc: () => buildGalleryDoc('militar') },
 ];
 
 export const PHOTO_TEMPLATES = [

@@ -4,7 +4,8 @@ import { StageRenderer, exportPNG, exportLayersSeparately } from './engine/stage
 import { makeTextLayer, makeImageLayer, makeLogoLayer, makePinLayer, makeFrameLayer, makeBackgroundLayer } from './engine/layerFactory.js';
 import { listTemplates, loadTemplateDoc, saveAsNewTemplate, deleteTemplate } from './templates/store.js';
 import { renderLayerList } from './ui/layerList.js';
-import { renderProps, renderQuickPanel } from './ui/propsPanel.js';
+import { renderProps, renderQuickPanel, renderGalleryPanel } from './ui/propsPanel.js';
+import { GALLERIES, galleryItem, galleryFileName } from './templates/gallery.js';
 import { dataURLToBlob, dataURLToUint8Array, downloadBlob } from './lib/download.js';
 import { createZip } from './lib/zip.js';
 import { COLORS, FONT_FAMILY_TITLE_ITALIC, FONT_WIDTH_VARIANTS } from './engine/constants.js';
@@ -41,6 +42,14 @@ function regenerateQuick() {
   const mode = state.quickGenerator;
   if (!mode) return;
 
+  if (mode === 'gallery') {
+    const img = state.layers.find((l) => l.type === 'image');
+    const item = img && galleryItem(img.galleryKey, img.itemKey);
+    if (!item) return;
+    setCanvasSize(item.width, item.height);
+    updateLayer(img.id, { src: item.src, x: 0, y: 0, width: item.width, height: item.height, fit: 'contain', locked: true }, { history: false });
+    return;
+  }
   if (mode === 'title') {
     const text = state.layers.find((l) => l.type === 'text');
     if (!text) return;
@@ -140,8 +149,52 @@ function refreshCanvas() {
   });
 }
 
+function getLayerItemKey() {
+  const img = getState().layers.find((l) => l.type === 'image');
+  return img && img.itemKey;
+}
+
+async function downloadGalleryItem(item) {
+  try {
+    const res = await fetch(item.src);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    downloadBlob(await res.blob(), galleryFileName(item));
+  } catch (err) {
+    console.error('Error descargando sticker', err);
+    alert('No se ha podido descargar el sticker. Vuelve a intentarlo.');
+  }
+}
+
+async function downloadGalleryAll(gallery) {
+  try {
+    const files = [];
+    for (const item of gallery.items) {
+      const res = await fetch(item.src);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      files.push({ name: galleryFileName(item), data: new Uint8Array(await res.arrayBuffer()) });
+    }
+    downloadBlob(createZip(files), 'stickers_quieres_militar.zip');
+  } catch (err) {
+    console.error('Error descargando stickers', err);
+    alert('No se han podido descargar los stickers. Vuelve a intentarlo.');
+  }
+}
+
 function refreshProps() {
   const state = getState();
+  if (state.quickGenerator === 'gallery') {
+    const img = state.layers.find((l) => l.type === 'image');
+    const gallery = img && GALLERIES[img.galleryKey];
+    if (!gallery) return;
+    renderGalleryPanel(propsContentEl, {
+      gallery,
+      currentKey: img.itemKey,
+      onSelect: (key) => { updateLayer(img.id, { itemKey: key }); refreshAll(); },
+      onDownload: () => downloadGalleryItem(galleryItem(img.galleryKey, getLayerItemKey())),
+      onDownloadAll: () => downloadGalleryAll(gallery),
+    });
+    return;
+  }
   if (state.quickGenerator === 'location' || state.quickGenerator === 'photoLocation') {
     renderQuickPanel(propsContentEl, { onChange: refreshCanvas });
     return;
