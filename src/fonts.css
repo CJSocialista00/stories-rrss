@@ -92,3 +92,30 @@
 @font-face { font-family: 'CJS Acumin Wide'; src: url('../assets/fonts/acumin/acumin-wide-800-italic.woff') format('woff'); font-weight: 800; font-style: italic; font-display: block; }
 @font-face { font-family: 'CJS Acumin Wide'; src: url('../assets/fonts/acumin/acumin-wide-900-normal.woff') format('woff'); font-weight: 900; font-style: normal; font-display: block; }
 @font-face { font-family: 'CJS Acumin Wide'; src: url('../assets/fonts/acumin/acumin-wide-900-italic.woff') format('woff'); font-weight: 900; font-style: italic; font-display: block; }
+
+/* Juegos de tipografía OES (Made Outer Sans) y AJT (Helvetica Neue + Thunder).
+   OES: la cursiva es una oblicua de 12° generada a partir del corte recto
+   (la fuente no trae cursiva). AJT: todas las cursivas son reales. Roman 400 y
+   Bold 700 (cuerpo), Thunder Extra Bold 800 (títulos), Black Condensed 900.
+   Ver engine/fontSets.js. */
+@font-face { font-family: 'OES Made Outer Sans'; src: url('../assets/fonts/oes/made-outer-sans-400-normal.woff') format('woff'); font-weight: 400; font-style: normal; font-display: block; }
+@font-face { font-family: 'OES Made Outer Sans'; src: url('../assets/fonts/oes/made-outer-sans-400-italic.woff') format('woff'); font-weight: 400; font-style: italic; font-display: block; }
+@font-face { font-family: 'OES Made Outer Sans'; src: url('../assets/fonts/oes/made-outer-sans-700-normal.woff') format('woff'); font-weight: 700; font-style: normal; font-display: block; }
+@font-face { font-family: 'OES Made Outer Sans'; src: url('../assets/fonts/oes/made-outer-sans-700-italic.woff') format('woff'); font-weight: 700; font-style: italic; font-display: block; }
+@font-face { font-family: 'AJT Helvetica Neue'; src: url('../assets/fonts/ajt/helvetica-neue-400-normal.woff') format('woff'); font-weight: 400; font-style: normal; font-display: block; }
+@font-face { font-family: 'AJT Helvetica Neue'; src: url('../assets/fonts/ajt/helvetica-neue-400-italic.woff') format('woff'); font-weight: 400; font-style: italic; font-display: block; }
+@font-face { font-family: 'AJT Helvetica Neue'; src: url('../assets/fonts/ajt/helvetica-neue-700-normal.woff') format('woff'); font-weight: 700; font-style: normal; font-display: block; }
+@font-face { font-family: 'AJT Helvetica Neue'; src: url('../assets/fonts/ajt/helvetica-neue-700-italic.woff') format('woff'); font-weight: 700; font-style: italic; font-display: block; }
+@font-face { font-family: 'AJT Helvetica Neue Condensed'; src: url('../assets/fonts/ajt/helvetica-neue-condensed-900-normal.woff') format('woff'); font-weight: 900; font-style: normal; font-display: block; }
+@font-face { font-family: 'AJT Helvetica Neue Condensed'; src: url('../assets/fonts/ajt/helvetica-neue-condensed-900-italic.woff') format('woff'); font-weight: 900; font-style: italic; font-display: block; }
+@font-face { font-family: 'AJT Thunder'; src: url('../assets/fonts/ajt/thunder-extrabold-800-normal.woff') format('woff'); font-weight: 800; font-style: normal; font-display: block; }
+@font-face { font-family: 'AJT Thunder'; src: url('../assets/fonts/ajt/thunder-extrabold-800-italic.woff') format('woff'); font-weight: 800; font-style: italic; font-display: block; }
+/* OES: Mozilla Text (cuerpo; instancias estáticas 400/700 de la variable, cursiva oblicua generada) y
+   Clandy Italic (solo la inicial de los títulos destacados). AJT: PP Playground Medium (cursiva oblicua generada). */
+@font-face { font-family: 'OES Mozilla Text'; src: url('../assets/fonts/oes/mozilla-text-400-normal.woff') format('woff'); font-weight: 400; font-style: normal; font-display: block; }
+@font-face { font-family: 'OES Mozilla Text'; src: url('../assets/fonts/oes/mozilla-text-400-italic.woff') format('woff'); font-weight: 400; font-style: italic; font-display: block; }
+@font-face { font-family: 'OES Mozilla Text'; src: url('../assets/fonts/oes/mozilla-text-700-normal.woff') format('woff'); font-weight: 700; font-style: normal; font-display: block; }
+@font-face { font-family: 'OES Mozilla Text'; src: url('../assets/fonts/oes/mozilla-text-700-italic.woff') format('woff'); font-weight: 700; font-style: italic; font-display: block; }
+@font-face { font-family: 'OES Clandy'; src: url('../assets/fonts/oes/clandy-400-italic.woff') format('woff'); font-weight: 400; font-style: italic; font-display: block; }
+@font-face { font-family: 'AJT PP Playground'; src: url('../assets/fonts/ajt/pp-playground-500-normal.woff') format('woff'); font-weight: 500; font-style: normal; font-display: block; }
+@font-face { font-family: 'AJT PP Playground'; src: url('../assets/fonts/ajt/pp-playground-500-italic.woff') format('woff'); font-weight: 500; font-style: italic; font-display: block; }

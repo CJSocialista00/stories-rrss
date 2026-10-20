@@ -1,4 +1,4 @@
-import { buildGalleryDoc } from './gallery.js';
+import { buildGalleryDoc, GALLERIES } from './gallery.js';
 import { buildTextTitleDoc, buildTextBodyDoc, buildTextBodyPillDoc, buildLocationStickerDoc, buildPhotoLocationDoc } from './locationGenerator.js';
 
 // Plantillas de arranque para los generadores rápidos. El contenido real se
@@ -16,3 +16,13 @@ export const STICKER_TEMPLATES = [
 export const PHOTO_TEMPLATES = [
   { id: 'photo_location', name: 'Foto con ubicación', builtin: true, category: 'Fotos', doc: () => buildPhotoLocationDoc('MADRID') },
 ];
+
+// Sección propia del menú: un acceso por sticker, todos con la misma galería
+// (miniaturas, color de marca y descarga) en el panel.
+export const HUELGA_TEMPLATES = GALLERIES.huelga11n.items.map((item) => ({
+  id: `sticker_huelga_${item.key}`,
+  name: item.label,
+  builtin: true,
+  category: 'Stickers Huelga General 11N',
+  doc: () => buildGalleryDoc('huelga11n', item.key),
+}));

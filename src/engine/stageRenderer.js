@@ -1,5 +1,7 @@
 import { getState, updateLayer, selectLayer, pushHistory } from './state.js';
-import { CANVAS_W, CANVAS_H, FONT_FAMILY, FONT_FAMILY_ITALIC, FONT_FAMILY_TITLE, FONT_FAMILY_TITLE_ITALIC, FONT_WIDTH_VARIANTS } from './constants.js';
+import { CANVAS_W, CANVAS_H, FONT_FAMILY, FONT_FAMILY_ITALIC, FONT_FAMILY_TITLE, FONT_FAMILY_TITLE_ITALIC } from './constants.js';
+import { getWidthVariant, currentFontSet, getInitialFont } from './fontSets.js';
+import { layoutMixedTitle, fitMixedTitle, drawMixedTitle } from './mixedTitle.js';
 import { fitTextToBox } from './textFit.js';
 import { layoutRichText, fitRichText, bodyWeights } from './richText.js';
 import { ensureFontsFor } from './fonts.js';
@@ -35,7 +37,7 @@ function tintedPin(src, color) {
     ctx.fillRect(0, 0, c.width, c.height);
     return c;
   });
-  if (tintCache.size > 50) tintCache.clear();
+  if (tintCache.size > 12) tintCache.clear(); // los stickers grandes pesan decenas de MB
   tintCache.set(key, p);
   return p;
 }
@@ -210,7 +212,7 @@ export class StageRenderer {
       // (título = Text simple, cuerpo = Group de "runs" por la negrita
       // parcial); si el rol cambió desde la última vez, hay que reconstruir
       // el nodo en vez de actualizar uno del tipo equivocado.
-      const expectedKind = layerData.type === 'text' ? `text-${layerData.role}` : layerData.type;
+      const expectedKind = layerData.type === 'text' ? `text-${layerData.role}${this.isMixedTitle(layerData) ? '-mixed' : ''}` : layerData.type;
       if (node && node.getAttr('_kind') !== expectedKind) {
         node.destroy();
         this.nodes.delete(layerData.id);
@@ -431,8 +433,11 @@ export class StageRenderer {
   }
 
   // ---- IMAGE ----
+  // una imagen con "tint" (sticker de la galería en un color de marca) se pinta de ese color
+  imageKey(d) { return d.tint && d.src ? `${d.src}|tint:${d.tint}` : d.src; }
+  loadImageFor(d) { return d.tint && d.src ? tintedPin(d.src, d.tint) : loadImage(d.src); }
   async createImageNode(d) {
-    const img = await loadImage(d.src);
+    const img = await this.loadImageFor(d);
     const group = new window.Konva.Group({
       x: d.x, y: d.y, width: d.width, height: d.height, rotation: d.rotation || 0,
     });
@@ -456,7 +461,7 @@ export class StageRenderer {
       name: 'img', visible: !!img,
     });
     group.add(placeholder, label, image);
-    group.setAttr('_src', d.src);
+    group.setAttr('_src', this.imageKey(d));
     if (img) this.applyCover(image, img, d);
     return group;
   }
@@ -473,9 +478,9 @@ export class StageRenderer {
     image.size({ width: d.width, height: d.height });
     image.cornerRadius(d.cornerRadius || 0);
 
-    if (group.getAttr('_src') !== d.src) {
-      const img = await loadImage(d.src);
-      group.setAttr('_src', d.src);
+    if (group.getAttr('_src') !== this.imageKey(d)) {
+      const img = await this.loadImageFor(d);
+      group.setAttr('_src', this.imageKey(d));
       image.image(img || undefined);
       const has = !!img;
       placeholder.visible(!has);
@@ -549,15 +554,36 @@ export class StageRenderer {
     const weight = d.weight || (isTitle ? 800 : (d.bold ? 700 : 400));
     // ancho: explícito (d.widthVariant) > por defecto según rol
     const widthKey = d.widthVariant || (isTitle ? 'extracondensed' : 'normal');
-    const variant = FONT_WIDTH_VARIANTS.find((v) => v.key === widthKey) || FONT_WIDTH_VARIANTS[3];
+    const variant = getWidthVariant(widthKey);
     const family = d.italic ? variant.familyItalic : variant.family;
     return { weight, family };
   }
   resolveFontSize(d) {
-    if (!d.autoFit) return d.fontSize || 48;
+    if (!d.autoFit) {
+      const size = d.fontSize || 48;
+      // Los tamaños fijos de las plantillas están pensados para Acumin (muy
+      // estrecha). Con OES/AJT el mismo tamaño puede no caber en la caja y el
+      // texto se recortaba: ahí se reduce lo justo para que quepa. En CJS (y
+      // en los stickers, cuya caja ya se calcula a medida) no cambia nada.
+      if (!currentFontSet().styles || d.locked) return size;
+      // el título conserva las líneas que la plantilla le reserva a su tamaño
+      // de diseño (una, normalmente) en vez de partirse en dos y pisar el cuerpo
+      const maxLines = Math.max(1, Math.floor(d.height / (size * 1.08)));
+      return this.fitSize(d, size, maxLines);
+    }
+    return this.fitSize(d, d.role === 'title' ? 160 : 90);
+  }
+  // Mayor tamaño (hasta maxSize) con el que el texto cabe en la caja de la capa
+  fitSize(d, maxSize, maxLines = Infinity) {
     const { weight, family } = this.computeFont(d);
+    if (this.isMixedTitle(d)) {
+      return fitMixedTitle({
+        text: d.text || '', main: { family, weight, italic: !!d.italic }, initial: getInitialFont(d),
+        boxWidth: d.width, boxHeight: d.height, maxSize, maxLines, letterSpacing: d.letterSpacing || 0, align: d.align || 'left',
+      });
+    }
     if (d.role !== 'title') {
-      const variant = FONT_WIDTH_VARIANTS.find((v) => v.key === d.widthVariant) || FONT_WIDTH_VARIANTS[3];
+      const variant = getWidthVariant(d.widthVariant || 'normal');
       return fitRichText({
         text: d.text || '',
         box: { width: d.width, height: d.height },
@@ -568,7 +594,7 @@ export class StageRenderer {
         boldWeight: bodyWeights(d).bold,
         align: d.align || 'left',
         minSize: 12,
-        maxSize: 90,
+        maxSize,
       }).fontSize;
     }
     const fit = fitTextToBox({
@@ -578,7 +604,8 @@ export class StageRenderer {
       fontWeight: weight,
       italic: !!d.italic,
       minSize: 12,
-      maxSize: 160,
+      maxSize,
+      maxLines,
     });
     return fit.fontSize;
   }
@@ -625,7 +652,7 @@ export class StageRenderer {
   buildBodyRuns(group, d) {
     const fontSize = this.resolveFontSize(d);
     const { normal: normalWeight, bold: boldWeight } = bodyWeights(d);
-    const variant = FONT_WIDTH_VARIANTS.find((v) => v.key === d.widthVariant) || FONT_WIDTH_VARIANTS[3];
+    const variant = getWidthVariant(d.widthVariant || 'normal');
     const layout = layoutRichText({
       text: d.text || '',
       box: { width: d.width, height: d.height },
@@ -664,11 +691,44 @@ export class StageRenderer {
     this.buildBodyRuns(group, d);
   }
 
+  // título destacado con la inicial en otra fuente (OES): se dibuja a mano
+  isMixedTitle(d) {
+    return d.type === 'text' && d.role === 'title' && !!getInitialFont(d);
+  }
+  createMixedTitleNode(d) {
+    const group = new window.Konva.Group({ x: d.x, y: d.y, width: d.width, height: d.height, rotation: d.rotation || 0 });
+    group.add(new window.Konva.Shape({
+      name: 'mixedTitle', width: d.width, height: d.height,
+      sceneFunc: (ctx, shape) => {
+        const layout = shape.getAttr('_layout');
+        if (layout) drawMixedTitle(ctx._context, layout, shape.getAttr('_color'));
+      },
+      hitFunc: (ctx, shape) => { ctx.beginPath(); ctx.rect(0, 0, shape.width(), shape.height()); ctx.closePath(); ctx.fillStrokeShape(shape); },
+    }));
+    this.updateMixedTitleNode(group, d);
+    return group;
+  }
+  updateMixedTitleNode(group, d) {
+    group.position({ x: d.x, y: d.y });
+    group.size({ width: d.width, height: d.height });
+    group.rotation(d.rotation || 0);
+    const shape = group.findOne('.mixedTitle');
+    shape.size({ width: d.width, height: d.height });
+    const { weight, family } = this.computeFont(d);
+    const layout = layoutMixedTitle({
+      text: d.text || '', main: { family, weight, italic: !!d.italic }, initial: getInitialFont(d),
+      fontSize: this.resolveFontSize(d), letterSpacing: d.letterSpacing || 0, boxWidth: d.width, align: d.align || 'left',
+    });
+    shape.setAttrs({ _layout: layout, _color: d.color || '#ffffff' });
+  }
+
   createTextNode(d) {
+    if (this.isMixedTitle(d)) return this.createMixedTitleNode(d);
     return d.role === 'title' ? this.createTitleTextNode(d) : this.createBodyTextNode(d);
   }
   updateTextNode(node, d) {
-    if (d.role === 'title') this.updateTitleTextNode(node, d);
+    if (this.isMixedTitle(d)) this.updateMixedTitleNode(node, d);
+    else if (d.role === 'title') this.updateTitleTextNode(node, d);
     else this.updateBodyTextNode(node, d);
   }
 

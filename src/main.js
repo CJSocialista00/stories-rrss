@@ -5,14 +5,13 @@ import { makeTextLayer, makeImageLayer, makeLogoLayer, makePinLayer, makeFrameLa
 import { listTemplates, loadTemplateDoc, saveAsNewTemplate, deleteTemplate } from './templates/store.js';
 import { renderLayerList } from './ui/layerList.js';
 import { renderProps, renderQuickPanel, renderGalleryPanel } from './ui/propsPanel.js';
-import { GALLERIES, galleryItem, galleryFileName } from './templates/gallery.js';
+import { GALLERIES, galleryItem, galleryFileName, galleryColorFileName } from './templates/gallery.js';
+import { recolorBlob } from './lib/recolor.js';
 import { dataURLToBlob, dataURLToUint8Array, downloadBlob } from './lib/download.js';
 import { createZip } from './lib/zip.js';
-import { COLORS, FONT_FAMILY_TITLE_ITALIC, FONT_WIDTH_VARIANTS } from './engine/constants.js';
 import { layoutRichText, bodyWeights } from './engine/richText.js';
 import { ensureFonts, ensureFontsFor } from './engine/fonts.js';
-
-const BRAND_COLORS = [COLORS.white, COLORS.red, COLORS.black].map((c) => c.toLowerCase());
+import { FONT_SETS, getFontSetKey, setFontSetKey, getWidthVariant, titleFamily, snapWeight, brandColor, brandHexes, recolorPatch } from './engine/fontSets.js';
 
 const stageContainer = document.getElementById('stageContainer');
 const layerListEl = document.getElementById('layerList');
@@ -28,9 +27,10 @@ let renderer;
 let currentTemplateId = null;
 
 async function waitFonts() {
-  // solo la tipografía de marca (ubicación/título: ExtraCondensed Black
-  // Itálica); el resto se carga bajo demanda con ensureFonts()
-  await ensureFonts([`italic 800 100px "${FONT_FAMILY_TITLE_ITALIC}"`]);
+  // solo el rótulo del juego de tipografía activo (en CJS, ExtraCondensed
+  // Black Itálica); el resto se carga bajo demanda con ensureFonts()
+  const family = titleFamily();
+  await ensureFonts([`italic ${snapWeight(family, 800)} 100px "${family}"`]);
 }
 
 // Generadores rápidos (sticker de texto, de ubicación, foto con ubicación):
@@ -47,7 +47,7 @@ function regenerateQuick() {
     const item = img && galleryItem(img.galleryKey, img.itemKey);
     if (!item) return;
     setCanvasSize(item.width, item.height);
-    updateLayer(img.id, { src: item.src, x: 0, y: 0, width: item.width, height: item.height, fit: 'contain', locked: true }, { history: false });
+    updateLayer(img.id, { src: item.src, x: 0, y: 0, width: item.width, height: item.height, fit: 'contain', locked: true, tint: item.recolor ? img.galleryColor || null : null }, { history: false });
     return;
   }
   if (mode === 'title') {
@@ -59,6 +59,7 @@ function regenerateQuick() {
       widthVariant: text.widthVariant || 'extracondensed',
       weight: text.weight || 800,
       italic: text.italic !== false,
+      initialFont: text.initialFont || null,
     });
     setCanvasSize(g.canvasW, g.canvasH);
     updateLayer(text.id, {
@@ -76,7 +77,7 @@ function regenerateQuick() {
     const fontSize = text.fontSize || 64;
     const lineWidth = text.lineWidth || 1000;
     const align = text.align || 'left';
-    const variant = FONT_WIDTH_VARIANTS.find((v) => v.key === (text.widthVariant || 'normal')) || FONT_WIDTH_VARIANTS[3];
+    const variant = getWidthVariant(text.widthVariant || 'normal');
     const { normal, bold } = bodyWeights(text);
     const layout = layoutRichText({
       text: text.text || '', box: { width: lineWidth, height: Infinity },
@@ -96,8 +97,8 @@ function regenerateQuick() {
     // la ubicación solo admite colores corporativos: cualquier otro (p. ej.
     // de un espacio de trabajo guardado antes) vuelve a blanco
     const text = state.layers.find((l) => l.type === 'text');
-    if (text && !BRAND_COLORS.includes((text.color || '').toLowerCase())) {
-      updateLayer(text.id, { color: COLORS.white }, { history: false });
+    if (text && !brandHexes().includes((text.color || '').toLowerCase())) {
+      updateLayer(text.id, { color: brandColor('white') }, { history: false });
     }
   }
   if (mode === 'location') {
@@ -128,9 +129,11 @@ function updatePreviewBackground() {
   const text = state.layers.find((l) => l.type === 'text');
   // con pastila de fondo, lo que se ve sobre el damero es la pastila
   const pill = state.layers.find((l) => l.type === 'pill' && l.visible !== false);
-  const isSticker = state.quickGenerator === 'location' || state.quickGenerator === 'title' || state.quickGenerator === 'body';
-  const visibleColor = pill ? pill.color : text && text.color;
-  const isBlack = (visibleColor || '').toLowerCase() === COLORS.black.toLowerCase();
+  const image = state.layers.find((l) => l.type === 'image');
+  const gallerySticker = state.quickGenerator === 'gallery' && image && (galleryItem(image.galleryKey, image.itemKey) || {}).recolor;
+  const isSticker = gallerySticker || state.quickGenerator === 'location' || state.quickGenerator === 'title' || state.quickGenerator === 'body';
+  const visibleColor = gallerySticker ? image.galleryColor : pill ? pill.color : text && text.color;
+  const isBlack = (visibleColor || '').toLowerCase() === brandColor('dark');
   document.getElementById('canvasArea').classList.toggle('light-preview', isSticker && isBlack);
 }
 
@@ -154,26 +157,33 @@ function getLayerItemKey() {
   return img && img.itemKey;
 }
 
-async function downloadGalleryItem(item) {
+// Archivo del sticker: el original, o recoloreado a tamaño completo si es de
+// un solo color y se ha elegido un color de marca
+async function galleryFileData(item, hex) {
+  if (item.recolor && hex) return { name: galleryColorFileName(item, hex), blob: await recolorBlob(item.src, hex) };
+  const res = await fetch(item.src);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return { name: galleryFileName(item), blob: await res.blob() };
+}
+
+async function downloadGalleryItem(item, hex) {
   try {
-    const res = await fetch(item.src);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    downloadBlob(await res.blob(), galleryFileName(item));
+    const f = await galleryFileData(item, hex);
+    downloadBlob(f.blob, f.name);
   } catch (err) {
     console.error('Error descargando sticker', err);
     alert('No se ha podido descargar el sticker. Vuelve a intentarlo.');
   }
 }
 
-async function downloadGalleryAll(gallery) {
+async function downloadGalleryAll(gallery, hex) {
   try {
     const files = [];
     for (const item of gallery.items) {
-      const res = await fetch(item.src);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      files.push({ name: galleryFileName(item), data: new Uint8Array(await res.arrayBuffer()) });
+      const f = await galleryFileData(item, hex);
+      files.push({ name: f.name, data: new Uint8Array(await f.blob.arrayBuffer()) });
     }
-    downloadBlob(createZip(files), 'stickers_quieres_militar.zip');
+    downloadBlob(createZip(files), gallery.zipName || 'stickers.zip');
   } catch (err) {
     console.error('Error descargando stickers', err);
     alert('No se han podido descargar los stickers. Vuelve a intentarlo.');
@@ -189,9 +199,11 @@ function refreshProps() {
     renderGalleryPanel(propsContentEl, {
       gallery,
       currentKey: img.itemKey,
+      color: img.galleryColor || null,
       onSelect: (key) => { updateLayer(img.id, { itemKey: key }); refreshAll(); },
-      onDownload: () => downloadGalleryItem(galleryItem(img.galleryKey, getLayerItemKey())),
-      onDownloadAll: () => downloadGalleryAll(gallery),
+      onColor: (hex) => { updateLayer(img.id, { galleryColor: hex }); refreshAll(); },
+      onDownload: () => downloadGalleryItem(galleryItem(img.galleryKey, getLayerItemKey()), img.galleryColor || null),
+      onDownloadAll: () => downloadGalleryAll(gallery, img.galleryColor || null),
     });
     return;
   }
@@ -244,8 +256,36 @@ function switchTab(tab) {
 }
 
 // ---- drawer de plantillas ----
-function openDrawer() { templatesDrawer.classList.remove('hidden'); populateTemplateList(); }
+function openDrawer() { templatesDrawer.classList.remove('hidden'); populateFontSetPicker(); populateTemplateList(); }
 function closeDrawer() { templatesDrawer.classList.add('hidden'); }
+
+// Juego de tipografía (CJS / OES / AJT): cambia solo la letra de todas las
+// plantillas; textos, colores y composición se quedan como están.
+function populateFontSetPicker() {
+  const picker = document.getElementById('fontSetPicker');
+  picker.innerHTML = '';
+  Object.values(FONT_SETS).forEach((set) => {
+    const btn = document.createElement('button');
+    btn.className = 'fontset-btn' + (set.key === getFontSetKey() ? ' active' : '');
+    btn.innerHTML = `<strong>${set.label}</strong><span>${set.detail}</span>`;
+    btn.addEventListener('click', async () => {
+      if (set.key === getFontSetKey()) return;
+      const previous = getFontSetKey();
+      setFontSetKey(set.key);
+      // el diseño en curso pasa a los colores de la nueva marca (rojo → rojo
+      // de la marca, blanco, negro); el resto de plantillas lo hace al abrirse
+      getState().layers.slice().forEach((l) => {
+        const patch = recolorPatch(l, previous, set.key);
+        if (patch) updateLayer(l.id, patch, { history: false });
+      });
+      saveCurrentWorkspace();
+      persistWorkspaces();
+      populateFontSetPicker();
+      await refreshAll();
+    });
+    picker.appendChild(btn);
+  });
+}
 
 function populateTemplateList() {
   templateListItems.innerHTML = '';
@@ -318,7 +358,22 @@ let switchingTemplate = false;
 let persistTimer = null;
 function saveCurrentWorkspace() {
   if (!currentTemplateId || switchingTemplate) return;
-  workspaces.set(currentTemplateId, serializeDocument());
+  // las galerías de stickers no guardan nada (son visores): se abren siempre limpias
+  if (getState().quickGenerator === 'gallery') return;
+  // se anota la marca para traducir los colores si se abre con otra distinta
+  workspaces.set(currentTemplateId, { ...serializeDocument(), brand: getFontSetKey() });
+}
+
+// Colores del documento traducidos de la marca en que se guardó a la activa
+function adoptBrand(doc, fromKey) {
+  const to = getFontSetKey();
+  if (!doc || fromKey === to) return doc;
+  const copy = JSON.parse(JSON.stringify(doc));
+  copy.layers.forEach((l) => {
+    const patch = recolorPatch(l, fromKey, to);
+    if (patch) Object.assign(l, patch);
+  });
+  return copy;
 }
 function persistWorkspaces() {
   clearTimeout(persistTimer);
@@ -349,7 +404,10 @@ async function applyTemplate(id, { fresh = false } = {}) {
   let doc = workspaces.get(id) || freshDoc;
   // espacio guardado con una estructura antigua de la plantilla: se empieza de nuevo
   if (doc !== freshDoc && freshDoc && (doc.templateVersion || 1) !== (freshDoc.templateVersion || 1)) doc = freshDoc;
+  if (freshDoc && freshDoc.quickGenerator === 'gallery') doc = freshDoc;
   if (!doc) return;
+  // los diseños nuevos vienen en los colores de CJS; los guardados, en los de su marca
+  doc = adoptBrand(doc, doc === freshDoc ? 'cjs' : doc.brand || 'cjs');
   saveCurrentWorkspace(); // lo que había en la plantilla anterior se queda en su espacio
   switchingTemplate = true;
   currentTemplateId = id;
@@ -592,7 +650,7 @@ async function init() {
     await refreshAll(); switchTab('props');
   });
   document.getElementById('btnAddBackground').addEventListener('click', async () => {
-    addLayer(makeBackgroundLayer({ name: 'Fondo' }), { atBottom: true });
+    addLayer(makeBackgroundLayer({ name: 'Fondo', color: brandColor('dark') }), { atBottom: true });
     await refreshAll(); switchTab('props');
   });
 

@@ -7,9 +7,22 @@ import { makeImageLayer } from '../engine/layerFactory.js';
 export const GALLERIES = {
   militar: {
     title: '¿Quieres militar?',
+    zipName: 'stickers_quieres_militar.zip',
     items: [
       { key: 'corto', label: 'Versión corta', src: './assets/stickers/militar/quieres-militar-corto.png', width: 589, height: 937 },
       { key: 'largo', label: 'Versión larga', src: './assets/stickers/militar/quieres-militar-largo.png', width: 589, height: 1229 },
+    ],
+  },
+  // recolor: true = sticker de un solo color que se puede descargar en los
+  // colores de cada marca (ver lib/recolor.js)
+  huelga11n: {
+    title: 'Stickers Huelga General 11N',
+    zipName: 'stickers_huelga_general_11n.zip',
+    items: [
+      { key: 'huelga-general', label: 'Huelga General!', src: './assets/stickers/huelga11n/huelga-general.png', width: 792, height: 788, recolor: true },
+      { key: '11n-rentismo', label: '11N · Contra el rentismo', src: './assets/stickers/huelga11n/11n-contra-el-rentismo.png', width: 5610, height: 1019, recolor: true },
+      { key: 'contra-rentismo', label: 'Contra el rentismo, gobierno y capital', src: './assets/stickers/huelga11n/contra-el-rentismo-gobierno-capital.png', width: 2452, height: 1574, recolor: true },
+      { key: 'fondo-vertical', label: 'FONDO VERTICAL 9:16', src: './assets/stickers/huelga11n/fondo-vertical.png', width: 1080, height: 1980, recolor: false },
     ],
   },
 };
@@ -20,12 +33,12 @@ export function galleryItem(galleryKey, itemKey) {
   return g.items.find((i) => i.key === itemKey) || g.items[0];
 }
 
-export function buildGalleryDoc(galleryKey) {
+export function buildGalleryDoc(galleryKey, itemKey) {
   const g = GALLERIES[galleryKey];
-  const item = g.items[0];
+  const item = g.items.find((i) => i.key === itemKey) || g.items[0];
   return {
     canvas: { width: item.width, height: item.height },
-    templateName: `Sticker · ${g.title}`,
+    templateName: g.items.length > 1 && itemKey ? `${g.title} · ${item.label}` : `Sticker · ${g.title}`,
     quickGenerator: 'gallery',
     gallery: galleryKey,
     layers: [
@@ -36,6 +49,7 @@ export function buildGalleryDoc(galleryKey) {
         }),
         galleryKey,
         itemKey: item.key,
+        galleryColor: null, // null = color original; si no, hex de la marca
       },
     ],
   };
@@ -44,4 +58,10 @@ export function buildGalleryDoc(galleryKey) {
 // nombre de archivo de descarga a partir de la ruta original
 export function galleryFileName(item) {
   return item.src.split('/').pop();
+}
+
+// nombre de archivo al descargar en un color de marca: huelga-general-ff4331.png
+export function galleryColorFileName(item, hex) {
+  const base = galleryFileName(item);
+  return hex ? base.replace(/\.png$/i, `-${hex.replace('#', '')}.png`) : base;
 }

@@ -166,6 +166,23 @@ h3 {
 .template-item .tpl-del { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 13px; }
 .drawer-footer { margin-top: 12px; }
 
+/* selector de juego de tipografía (CJS / OES / AJT) */
+.fontset-picker { display: flex; gap: 6px; margin-bottom: 8px; }
+.fontset-btn {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 8px 4px;
+  background: var(--panel-light);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  cursor: pointer;
+}
+.fontset-btn strong { font-size: 15px; }
+.fontset-btn span { font-size: 10px; color: var(--text-dim); }
+.fontset-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.fontset-btn.active span { color: rgba(255, 255, 255, 0.85); }
+
 /* ---- bottom sheet ---- */
 #bottomSheet {
   position: relative;
@@ -455,5 +472,6 @@ select {
   background: var(--panel-light); border: 2px solid var(--border); border-radius: var(--radius);
   padding: 8px; color: var(--text); font-family: inherit; font-size: 13px; cursor: pointer;
 }
-.gallery-item img { width: 100%; height: 140px; object-fit: contain; }
+.gallery-item img { width: 100%; height: 140px; object-fit: contain; background: #8d8d8d; border-radius: 6px; }
+.toggle-row button.swatch { border-left-width: 6px; }
 .gallery-item.active { border-color: var(--accent); }

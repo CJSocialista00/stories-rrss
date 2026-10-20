@@ -1,6 +1,7 @@
-import { COLORS, FONT_WIDTH_VARIANTS } from '../engine/constants.js';
+import { COLORS } from '../engine/constants.js';
 import { makeTextLayer, makePinLayer, makeImageLayer, makePillLayer } from '../engine/layerFactory.js';
-import { FONT_FAMILY_TITLE_ITALIC } from '../engine/constants.js';
+import { getWidthVariant, titleFamily, currentFontSet, getInitialFont, titleUppercase } from '../engine/fontSets.js';
+import { layoutMixedTitle, capRatio } from '../engine/mixedTitle.js';
 
 // Proporciones medidas directamente sobre tus stickers reales
 // (D:\ICONOS DE UBICACIÓN\MURCIA.png, lienzo 4538x1813, contenido 969px de
@@ -14,9 +15,13 @@ const RATIO = {
   pinWidth: 0.6667, // relativo al alto H
 };
 
-// Interletrado (tracking) de la Acumin ExtraCondensed Black Itálica que usan
-// tus stickers reales: las letras van casi pegadas. Negativo = más juntas.
-const TITLE_LETTER_SPACING_RATIO = -0.028;
+// Interletrado (tracking) del rótulo: en la Acumin ExtraCondensed Black
+// Itálica de tus stickers reales las letras van casi pegadas (negativo = más
+// juntas). Cada juego de tipografía trae el suyo (fontSets.js).
+const titleTrackingRatio = () => currentFontSet().titleTracking;
+// Peso con el que se pide el rótulo (negro en Acumin; en OES/AJT la familia
+// solo tiene un corte pesado y CSS elige el más cercano)
+const TITLE_WEIGHT = 800;
 
 let measureCtx = null;
 function getMeasureCtx() {
@@ -133,7 +138,7 @@ function fitFontSizeToCapHeight(text, targetH, family, weight, letterSpacingRati
 }
 
 function widthVariantFamily(widthKey, italic) {
-  const variant = FONT_WIDTH_VARIANTS.find((v) => v.key === widthKey) || FONT_WIDTH_VARIANTS[0];
+  const variant = getWidthVariant(widthKey || 'extracondensed');
   return italic ? variant.familyItalic : variant.family;
 }
 
@@ -143,11 +148,30 @@ function widthVariantFamily(widthKey, italic) {
  * de Acumin Variable), a diferencia del sticker de ubicación que sí usa
  * siempre la misma tipografía de marca.
  */
-export function computeTextTitleGeometry(textRaw, { H = 500, widthVariant = 'extracondensed', weight = 800, italic = true } = {}) {
-  const text = (textRaw || 'TEXTO').toUpperCase().trim() || 'TEXTO';
+export function computeTextTitleGeometry(textRaw, { H = 500, widthVariant = 'extracondensed', weight = 800, italic = true, initialFont = null } = {}) {
+  const raw = (textRaw || 'TEXTO').trim() || 'TEXTO';
+  const text = titleUppercase(widthVariant) ? raw.toUpperCase() : raw;
   const pad = H * 0.35;
   const family = widthVariantFamily(widthVariant, italic);
-  const lsRatio = widthVariant === 'extracondensed' ? TITLE_LETTER_SPACING_RATIO : 0;
+  const lsRatio = widthVariant === 'extracondensed' ? titleTrackingRatio() : 0;
+  const initial = getInitialFont({ initialFont });
+  if (initial) {
+    // inicial en otra fuente: la altura de mayúscula H la da la fuente
+    // principal y la línea base va a H bajo el margen superior; la inicial
+    // (más grande) sobresale por arriba y por abajo dentro del margen
+    const main = { family, weight, italic };
+    const fontSize = H / capRatio(main);
+    const letterSpacing = fontSize * lsRatio;
+    const layout = layoutMixedTitle({ text, main, initial, fontSize, letterSpacing });
+    const baselineY = Math.max(pad + H, layout.inkAbove + pad * 0.6);
+    const bottom = Math.max(pad, layout.inkBelow + pad * 0.6);
+    return {
+      text,
+      canvasW: Math.round(layout.maxLineWidth + pad * 2),
+      canvasH: Math.round(baselineY + bottom),
+      textX: pad, textY: baselineY - layout.baseline, textW: layout.maxLineWidth + fontSize * 0.15, textH: H * 1.3, fontSize, letterSpacing,
+    };
+  }
   const { fontSize, width: textWidth, letterSpacing, inkOffsetY } = fitFontSizeToCapHeight(text, H, family, weight, lsRatio, italic);
   return {
     text,
@@ -157,8 +181,8 @@ export function computeTextTitleGeometry(textRaw, { H = 500, widthVariant = 'ext
   };
 }
 
-export function buildTextTitleDoc(textRaw, { H = 500, color = COLORS.red, widthVariant = 'extracondensed', weight = 800, italic = true } = {}) {
-  const g = computeTextTitleGeometry(textRaw, { H, widthVariant, weight, italic });
+export function buildTextTitleDoc(textRaw, { H = 500, color = COLORS.red, widthVariant = 'extracondensed', weight = 800, italic = true, initialFont = null } = {}) {
+  const g = computeTextTitleGeometry(textRaw, { H, widthVariant, weight, italic, initialFont });
   return {
     canvas: { width: g.canvasW, height: g.canvasH },
     templateName: `Sticker de título · ${g.text}`,
@@ -166,7 +190,7 @@ export function buildTextTitleDoc(textRaw, { H = 500, color = COLORS.red, widthV
     layers: [
       makeTextLayer({
         name: 'Texto', role: 'title', italic, locked: true,
-        text: g.text, widthVariant, weight,
+        text: g.text, widthVariant, weight, initialFont,
         x: g.textX, y: g.textY, width: g.textW, height: g.textH,
         color, align: 'left', autoFit: false, fontSize: g.fontSize, letterSpacing: g.letterSpacing,
       }),
@@ -226,7 +250,7 @@ export function buildTextBodyPillDoc(textRaw = 'Texto sobre una **pastila de col
  */
 export function computeLocationGeometry(cityNameRaw, { H = 600 } = {}) {
   const cityName = (cityNameRaw || 'CIUDAD').toUpperCase().trim() || 'CIUDAD';
-  const { fontSize, width: textWidth, letterSpacing, inkOffsetY } = fitFontSizeToCapHeight(cityName, H, FONT_FAMILY_TITLE_ITALIC, 800, TITLE_LETTER_SPACING_RATIO, true);
+  const { fontSize, width: textWidth, letterSpacing, inkOffsetY } = fitFontSizeToCapHeight(cityName, H, titleFamily(), TITLE_WEIGHT, titleTrackingRatio(), true);
   const leftMargin = RATIO.leftMargin * H;
   const rightMargin = RATIO.rightMargin * H;
   const gap = RATIO.gap * H;
@@ -282,13 +306,13 @@ export function computePhotoBadgeGeometry(cityNameRaw, { corner = 'bottom-left',
   const base = Math.min(canvasW, canvasH);
   const margin = base * 0.05;
   let H = base * 0.07 * scale;
-  let fit = fitFontSizeToCapHeight(cityName, H, FONT_FAMILY_TITLE_ITALIC, 800, TITLE_LETTER_SPACING_RATIO, true);
+  let fit = fitFontSizeToCapHeight(cityName, H, titleFamily(), TITLE_WEIGHT, titleTrackingRatio(), true);
   const widthFor = (h, textW) => RATIO.pinWidth * h + RATIO.gap * h + textW;
   const maxBadgeW = canvasW - margin * 2;
   if (widthFor(H, fit.width) > maxBadgeW) {
     // el ancho del sticker escala linealmente con H
     H *= maxBadgeW / widthFor(H, fit.width);
-    fit = fitFontSizeToCapHeight(cityName, H, FONT_FAMILY_TITLE_ITALIC, 800, TITLE_LETTER_SPACING_RATIO, true);
+    fit = fitFontSizeToCapHeight(cityName, H, titleFamily(), TITLE_WEIGHT, titleTrackingRatio(), true);
   }
   const { fontSize, width: textWidth, letterSpacing, inkOffsetY } = fit;
   const gap = RATIO.gap * H;

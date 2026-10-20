@@ -1,14 +1,13 @@
-import { FONT_WIDTH_VARIANTS } from './constants.js';
 import { bodyWeights } from './richText.js';
+import { getWidthVariant, snapWeight, getInitialFont, FONT_FILES } from './fontSets.js';
 
-// Las 90 fuentes estáticas de Acumin no se descargan todas al abrir la app:
-// solo las que usa el documento actual, justo antes de medir/dibujar. Así el
-// arranque en el móvil es ligero y cambiar de peso/ancho/cursiva carga solo
-// esa variante.
+// Las fuentes (90 de Acumin, más las de OES y AJT) no se descargan todas al
+// abrir la app: solo las que usa el documento actual, justo antes de
+// medir/dibujar. Así el arranque en el móvil es ligero y cambiar de
+// peso/ancho/cursiva/juego de tipografía carga solo esa variante.
 
 function familyFor(widthKey) {
-  const v = FONT_WIDTH_VARIANTS.find((x) => x.key === widthKey) || FONT_WIDTH_VARIANTS[3];
-  return v.family;
+  return getWidthVariant(widthKey).family;
 }
 
 // mismas reglas por defecto que StageRenderer.computeFont
@@ -20,11 +19,13 @@ export function fontSpecsForState(state) {
     const family = familyFor(d.widthVariant || (isTitle ? 'extracondensed' : 'normal'));
     const style = d.italic ? 'italic ' : '';
     if (isTitle) {
-      specs.add(`${style}${d.weight || 800} 100px "${family}"`);
+      specs.add(`${style}${snapWeight(family, d.weight || 800)} 100px "${family}"`);
+      const ini = getInitialFont(d);
+      if (ini) specs.add(`${ini.style === 'italic' ? 'italic ' : ''}${ini.weight} 100px "${ini.family}"`);
     } else {
       const { normal, bold } = bodyWeights(d); // base + negrita parcial (**así**)
-      specs.add(`${style}${normal} 100px "${family}"`);
-      specs.add(`${style}${bold} 100px "${family}"`);
+      specs.add(`${style}${snapWeight(family, normal)} 100px "${family}"`);
+      specs.add(`${style}${snapWeight(family, bold)} 100px "${family}"`);
     }
   }
   return [...specs];
@@ -61,6 +62,12 @@ const FAMILY_FILE_KEY = {
   'CJS Acumin': 'normal',
   'CJS Acumin Wide': 'wide',
 };
+function fontPath({ family, weight, style }) {
+  const other = FONT_FILES[family];
+  if (other) return `assets/fonts/${other.dir}/${other.base}-${weight}-${style}.woff`;
+  const key = FAMILY_FILE_KEY[family];
+  return key ? `assets/fonts/acumin/acumin-${key}-${weight}-${style}.woff` : null;
+}
 
 // Una descarga fallida (corte de red en el móvil) deja el FontFace en estado
 // "error" para siempre: el texto se quedaba en Times hasta recargar la
@@ -72,10 +79,10 @@ async function loadWithRetry(spec, face, attempts = 3) {
     } catch { /* se reintenta abajo */ }
     if (i === attempts - 1) return; // sin más intentos: se queda la de reserva
     const p = parseSpec(spec);
-    const key = p && FAMILY_FILE_KEY[p.family];
-    if (!key || typeof FontFace === 'undefined') return;
+    const path = p && fontPath(p);
+    if (!path || typeof FontFace === 'undefined') return;
     await new Promise((r) => setTimeout(r, 400 * (i + 1)));
-    const url = new URL(`assets/fonts/acumin/acumin-${key}-${p.weight}-${p.style}.woff`, document.baseURI).href;
+    const url = new URL(path, document.baseURI).href;
     face = new FontFace(p.family, `url("${url}") format("woff")`, { weight: p.weight, style: p.style, display: 'block' });
     document.fonts.add(face);
   }

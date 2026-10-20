@@ -1,6 +1,8 @@
 import { getLayer, updateLayer, removeLayer, getState } from '../engine/state.js';
 import { ARTICLE_SUBTITLE_GAP } from '../templates/builtins.js';
 import { COLORS, ASPECT_PRESETS, CANVAS_W, CANVAS_H, FONT_WIDTH_VARIANTS, FONT_WEIGHT_VARIANTS } from '../engine/constants.js';
+import { currentFontSet, brandColors } from '../engine/fontSets.js';
+import { recolorThumb } from '../lib/recolor.js';
 import { LOGO_KINDS, logoKindOf, PIN_VARIANTS } from '../engine/stageRenderer.js';
 
 function row(labelText, inputEl) {
@@ -70,7 +72,7 @@ export function renderQuickPanel(container, { onChange } = {}) {
   const quickColors = document.createElement('div');
   quickColors.className = 'toggle-row';
   const currentColor = (text.color || COLORS.white).toLowerCase();
-  [['Blanco', COLORS.white], ['Rojo', COLORS.red], ['Negro', COLORS.black]].forEach(([label, hex]) => {
+  brandColors().map((c) => [c.label, c.hex]).forEach(([label, hex]) => {
     const b = document.createElement('button');
     b.type = 'button';
     b.textContent = label;
@@ -128,14 +130,19 @@ function setArticleSubtitle(enabled) {
 }
 
 // Panel de una galería de stickers ya hechos: miniaturas para elegir cuál se
-// ve en el lienzo y botones para descargar el archivo original (uno o todos).
-export function renderGalleryPanel(container, { gallery, currentKey, onSelect, onDownload, onDownloadAll }) {
+// ve en el lienzo, color de marca (en los stickers de un solo color) y botones
+// para descargar (uno o todos).
+export function renderGalleryPanel(container, { gallery, currentKey, color, onSelect, onColor, onDownload, onDownloadAll }) {
   container.innerHTML = '';
+  const current = gallery.items.find((i) => i.key === currentKey) || gallery.items[0];
+  const canRecolor = gallery.items.some((i) => i.recolor);
   const g = document.createElement('div');
   g.className = 'prop-group';
   const hint = document.createElement('p');
   hint.className = 'hint';
-  hint.textContent = 'Stickers ya diseñados: elige uno y descárgalo tal cual, listo para subir a Instagram.';
+  hint.textContent = canRecolor
+    ? 'Elige un sticker, cámbiale el color a uno de tu marca y descárgalo, listo para subir a Instagram.'
+    : 'Stickers ya diseñados: elige uno y descárgalo tal cual, listo para subir a Instagram.';
   g.appendChild(hint);
 
   const grid = document.createElement('div');
@@ -147,6 +154,8 @@ export function renderGalleryPanel(container, { gallery, currentKey, onSelect, o
     const img = document.createElement('img');
     img.src = item.src;
     img.alt = item.label;
+    // miniatura en el color elegido (solo los de un color; el fondo no se tiñe)
+    if (item.recolor && color) recolorThumb(item.src, color).then((url) => { img.src = url; }).catch(() => {});
     const label = document.createElement('span');
     label.textContent = item.label;
     b.appendChild(img);
@@ -155,6 +164,23 @@ export function renderGalleryPanel(container, { gallery, currentKey, onSelect, o
     grid.appendChild(b);
   });
   g.appendChild(grid);
+
+  if (current.recolor) {
+    const colors = document.createElement('div');
+    colors.className = 'toggle-row wrap';
+    [['Original', null], ...brandColors().map((c) => [c.label, c.hex])].forEach(([label, hex]) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = label;
+      if ((color || null) === hex) b.classList.add('active');
+      if (hex) { b.style.borderLeftColor = hex; b.classList.add('swatch'); }
+      b.addEventListener('click', () => onColor(hex));
+      colors.appendChild(b);
+    });
+    const colorRow = row('Color', colors);
+    colorRow.style.marginTop = '12px';
+    g.appendChild(colorRow);
+  }
 
   const dl = document.createElement('button');
   dl.type = 'button';
@@ -410,7 +436,8 @@ export function renderProps(container, layerId, { onChange, onRemove } = {}) {
     // sticker de título y en el de cuerpo, igual que en el editor general
     // cuando el rol es cuerpo. El de ubicación mantiene siempre la
     // tipografía de marca (ExtraCondensed Black Itálica) a propósito.
-    if (isTitleSticker || isBodySticker || (isGeneralEditor && layer.role === 'body')) {
+    // OES y AJT ofrecen sus cortes también en los títulos de las plantillas
+    if (isTitleSticker || isBodySticker || (isGeneralEditor && (layer.role === 'body' || currentFontSet().styles))) {
       const styleToggle = document.createElement('div');
       styleToggle.className = 'toggle-row';
       const italicBtn = document.createElement('button');
@@ -420,41 +447,64 @@ export function renderProps(container, layerId, { onChange, onRemove } = {}) {
       styleToggle.appendChild(italicBtn);
       g.appendChild(styleToggle);
 
-      const widthLabel = document.createElement('p');
-      widthLabel.className = 'hint';
-      widthLabel.textContent = 'Ancho de letra:';
-      g.appendChild(widthLabel);
-      const widthRow = document.createElement('div');
-      widthRow.className = 'toggle-row wrap';
-      FONT_WIDTH_VARIANTS.forEach((variant) => {
-        const b2 = document.createElement('button');
-        b2.textContent = variant.label;
-        if ((layer.widthVariant || (isTitleSticker ? 'extracondensed' : 'normal')) === variant.key) b2.classList.add('active');
-        b2.addEventListener('click', () => { patch({ widthVariant: variant.key }); renderProps(container, layerId, { onChange, onRemove }); });
-        widthRow.appendChild(b2);
-      });
-      g.appendChild(widthRow);
-
-      const weightLabel = document.createElement('p');
-      weightLabel.className = 'hint';
-      weightLabel.textContent = 'Peso de letra:';
-      g.appendChild(weightLabel);
-      const weightRow = document.createElement('div');
-      weightRow.className = 'toggle-row wrap';
-      const currentWeight = layer.weight || (isTitleSticker ? 800 : (layer.bold ? 700 : 400));
-      FONT_WEIGHT_VARIANTS.forEach((variant) => {
-        const b3 = document.createElement('button');
-        b3.textContent = variant.label;
-        if (currentWeight === variant.weight) b3.classList.add('active');
-        b3.addEventListener('click', () => {
-          // guardamos el peso explícito y, para compatibilidad con el resto
-          // del motor (que usa "bold" para cuerpo normal), sincronizamos bold
-          patch({ weight: variant.weight, bold: variant.weight >= 700 });
-          renderProps(container, layerId, { onChange, onRemove });
+      const fontSet = currentFontSet();
+      if (fontSet.styles) {
+        // OES / AJT: solo tienen dos cortes (no hay ancho ni 9 pesos)
+        const styleLabel = document.createElement('p');
+        styleLabel.className = 'hint';
+        styleLabel.textContent = `Tipo de letra (${fontSet.detail}):`;
+        g.appendChild(styleLabel);
+        const styleRow = document.createElement('div');
+        styleRow.className = 'toggle-row wrap';
+        const curWeight = layer.weight || (layer.role === 'title' ? 800 : (layer.bold ? 700 : 400));
+        const curWidth = layer.widthVariant || (layer.role === 'title' ? 'extracondensed' : 'normal');
+        fontSet.styles.forEach((style) => {
+          // la inicial en otra fuente solo tiene sentido en títulos
+          if (style.titleOnly && !(isTitleSticker || layer.role === 'title')) return;
+          const b = document.createElement('button');
+          b.textContent = style.label;
+          if (style.isActive(layer, curWeight, curWidth)) b.classList.add('active');
+          b.addEventListener('click', () => { patch(style.patch); renderProps(container, layerId, { onChange, onRemove }); });
+          styleRow.appendChild(b);
         });
-        weightRow.appendChild(b3);
-      });
-      g.appendChild(weightRow);
+        g.appendChild(styleRow);
+      } else {
+        const widthLabel = document.createElement('p');
+        widthLabel.className = 'hint';
+        widthLabel.textContent = 'Ancho de letra:';
+        g.appendChild(widthLabel);
+        const widthRow = document.createElement('div');
+        widthRow.className = 'toggle-row wrap';
+        FONT_WIDTH_VARIANTS.forEach((variant) => {
+          const b2 = document.createElement('button');
+          b2.textContent = variant.label;
+          if ((layer.widthVariant || (isTitleSticker ? 'extracondensed' : 'normal')) === variant.key) b2.classList.add('active');
+          b2.addEventListener('click', () => { patch({ widthVariant: variant.key }); renderProps(container, layerId, { onChange, onRemove }); });
+          widthRow.appendChild(b2);
+        });
+        g.appendChild(widthRow);
+
+        const weightLabel = document.createElement('p');
+        weightLabel.className = 'hint';
+        weightLabel.textContent = 'Peso de letra:';
+        g.appendChild(weightLabel);
+        const weightRow = document.createElement('div');
+        weightRow.className = 'toggle-row wrap';
+        const currentWeight = layer.weight || (isTitleSticker ? 800 : (layer.bold ? 700 : 400));
+        FONT_WEIGHT_VARIANTS.forEach((variant) => {
+          const b3 = document.createElement('button');
+          b3.textContent = variant.label;
+          if (currentWeight === variant.weight) b3.classList.add('active');
+          b3.addEventListener('click', () => {
+            // guardamos el peso explícito y, para compatibilidad con el resto
+            // del motor (que usa "bold" para cuerpo normal), sincronizamos bold
+            patch({ weight: variant.weight, bold: variant.weight >= 700 });
+            renderProps(container, layerId, { onChange, onRemove });
+          });
+          weightRow.appendChild(b3);
+        });
+        g.appendChild(weightRow);
+      }
     } else if (isGeneralEditor) {
       const styleToggle = document.createElement('div');
       styleToggle.className = 'toggle-row';
@@ -495,8 +545,8 @@ export function renderProps(container, layerId, { onChange, onRemove } = {}) {
     g.appendChild(row('Color', colorInput));
 
     const quickColors = document.createElement('div');
-    quickColors.className = 'toggle-row';
-    [['Blanco', '#ffffff'], ['Rojo', COLORS.red], ['Negro', COLORS.black]].forEach(([label, hex]) => {
+    quickColors.className = 'toggle-row wrap';
+    brandColors().map((c) => [c.label, c.hex]).forEach(([label, hex]) => {
       const b = document.createElement('button');
       b.textContent = label;
       b.addEventListener('click', () => { colorInput.value = hex; patch({ color: hex }); });
@@ -534,7 +584,7 @@ export function renderProps(container, layerId, { onChange, onRemove } = {}) {
       const pillColors = document.createElement('div');
       pillColors.className = 'toggle-row';
       const currentPill = (pill.color || '').toLowerCase();
-      [['Rojo', COLORS.red], ['Negro', COLORS.black], ['Blanco', COLORS.white]].forEach(([label, hex]) => {
+      brandColors().map((c) => [c.label, c.hex]).forEach(([label, hex]) => {
         const b = document.createElement('button');
         b.type = 'button';
         b.textContent = label;
@@ -717,7 +767,7 @@ export function renderProps(container, layerId, { onChange, onRemove } = {}) {
 
     const quickColors = document.createElement('div');
     quickColors.className = 'toggle-row';
-    [['Rojo', COLORS.red], ['Negro', COLORS.black], ['Blanco', '#ffffff']].forEach(([label, hex]) => {
+    brandColors().map((c) => [c.label, c.hex]).forEach(([label, hex]) => {
       const b = document.createElement('button');
       b.textContent = label;
       if ((layer.color || '').toLowerCase() === hex.toLowerCase()) b.classList.add('active');

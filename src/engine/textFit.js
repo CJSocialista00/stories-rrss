@@ -39,6 +39,7 @@ export function fitTextToBox({
   minSize = 10,
   maxSize = 200,
   lineHeight = 1.08,
+  maxLines = Infinity,
 }) {
   const ctx = getCtx();
   let best = { fontSize: minSize, lines: [text] };
@@ -46,7 +47,7 @@ export function fitTextToBox({
     const font = `${italic ? 'italic ' : ''}${fontWeight} ${size}px "${fontFamily}"`;
     const lines = wrapLines(ctx, text, box.width, font);
     const totalHeight = lines.length * size * lineHeight;
-    if (totalHeight <= box.height) {
+    if (totalHeight <= box.height && lines.length <= maxLines) {
       best = { fontSize: size, lines };
       break;
     }
