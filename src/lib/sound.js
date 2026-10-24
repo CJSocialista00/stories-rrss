@@ -8,7 +8,7 @@ let master = null;
 let muted = false;
 try { muted = localStorage.getItem(KEY) === 'off'; } catch { /* sin almacenamiento */ }
 
-const MASTER_VOLUME = 0.55; // techo general: cada sonido ya es de por sí bajo
+const MASTER_VOLUME = 0.5; // techo general: suave, pero audible
 
 function audio() {
   if (!ctx) {
@@ -26,14 +26,20 @@ function audio() {
   return ctx;
 }
 
-// iOS/Safari solo permite sonar tras un gesto del usuario: se desbloquea en el primero
+// iOS/Safari solo permite sonar tras un gesto del usuario: se desbloquea en el primero.
+// resume() es asíncrono: devuelve una promesa que se cumple cuando ya suena.
 export function unlockAudio() {
   const c = audio();
-  if (c && c.state === 'suspended') c.resume();
-  return !!c && c.state === 'running';
+  if (!c) return Promise.resolve(false);
+  if (c.state === 'running') return Promise.resolve(true);
+  return Promise.resolve(c.resume()).then(() => {
+    // un instante de silencio: en iOS termina de abrir la salida de audio
+    try { const src = c.createBufferSource(); src.buffer = c.createBuffer(1, 1, 22050); src.connect(c.destination); src.start(0); } catch { /* ignorar */ }
+    return c.state === 'running';
+  }).catch(() => false);
 }
 
-function tone(freq, { at = 0, dur = 0.09, type = 'sine', vol = 0.05, to = null } = {}) {
+function tone(freq, { at = 0, dur = 0.09, type = 'sine', vol = 0.3, to = null } = {}) {
   const c = audio();
   if (!c || c.state !== 'running') return;
   const t0 = c.currentTime + at;
@@ -52,16 +58,16 @@ function tone(freq, { at = 0, dur = 0.09, type = 'sine', vol = 0.05, to = null }
 }
 
 const SOUNDS = {
-  tap: () => tone(640, { dur: 0.05, vol: 0.035 }),
-  select: () => tone(520, { dur: 0.07, vol: 0.04 }),
-  open: () => { tone(392, { dur: 0.08, vol: 0.04 }); tone(523, { at: 0.06, dur: 0.1, vol: 0.04 }); },
-  back: () => tone(420, { dur: 0.09, vol: 0.035, to: 330 }),
-  add: () => { tone(440, { dur: 0.09, vol: 0.045 }); tone(660, { at: 0.07, dur: 0.12, vol: 0.045 }); },
-  remove: () => tone(380, { dur: 0.13, vol: 0.04, to: 220 }),
-  on: () => tone(600, { dur: 0.08, vol: 0.04, to: 760 }),
-  off: () => tone(520, { dur: 0.08, vol: 0.035, to: 400 }),
-  snap: () => tone(760, { dur: 0.04, vol: 0.03, type: 'triangle' }),
-  done: () => { [523, 659, 784].forEach((f, i) => tone(f, { at: i * 0.075, dur: 0.2, vol: 0.045 })); },
+  tap: () => tone(640, { dur: 0.05, vol: 0.23 }),
+  select: () => tone(520, { dur: 0.07, vol: 0.26 }),
+  open: () => { tone(392, { dur: 0.08, vol: 0.26 }); tone(523, { at: 0.06, dur: 0.1, vol: 0.26 }); },
+  back: () => tone(420, { dur: 0.09, vol: 0.23, to: 330 }),
+  add: () => { tone(440, { dur: 0.09, vol: 0.29 }); tone(660, { at: 0.07, dur: 0.12, vol: 0.29 }); },
+  remove: () => tone(380, { dur: 0.13, vol: 0.26, to: 220 }),
+  on: () => tone(600, { dur: 0.08, vol: 0.26, to: 760 }),
+  off: () => tone(520, { dur: 0.08, vol: 0.23, to: 400 }),
+  snap: () => tone(760, { dur: 0.04, vol: 0.20, type: 'triangle' }),
+  done: () => { [523, 659, 784].forEach((f, i) => tone(f, { at: i * 0.075, dur: 0.2, vol: 0.29 })); },
 };
 
 export function play(name) {
@@ -74,7 +80,7 @@ export function isMuted() { return muted; }
 export function setMuted(value) {
   muted = !!value;
   try { localStorage.setItem(KEY, muted ? 'off' : 'on'); } catch { /* ignorar */ }
-  if (!muted) { unlockAudio(); play('on'); }
+  if (!muted) unlockAudio().then(() => play('on'));
 }
 
 // Sonido automático según el botón pulsado (una sola vez para toda la app).
@@ -92,20 +98,25 @@ function soundFor(el) {
 }
 
 export function initUiSounds() {
-  let pointerHandled = false;
+  const target = (e) => (e.target.closest ? e.target.closest('button, [role="switch"]') : null);
+  const state = () => (ctx ? ctx.state : 'none');
+  let played = false;
+  // Con el audio ya abierto suena al pulsar (sin esperar al «click»). Si aún
+  // está bloqueado (primer toque, sobre todo en iPhone), se abre y suena después.
   document.addEventListener('pointerdown', (e) => {
-    const b = e.target.closest && e.target.closest('button, [role="switch"]');
-    pointerHandled = false;
+    played = false;
+    const b = target(e);
     if (!b || b.disabled) return;
-    if (audio() && ctx.state === 'running') { play(soundFor(b)); pointerHandled = true; }
+    if (state() === 'running') { play(soundFor(b)); played = true; }
   }, true);
-  // primer toque en iOS: el audio aún está bloqueado en pointerdown; se desbloquea
-  // y suena en el click de ese mismo toque
   document.addEventListener('click', (e) => {
-    const b = e.target.closest && e.target.closest('button, [role="switch"]');
-    const wasRunning = pointerHandled;
-    pointerHandled = false;
-    if (wasRunning) return;
-    if (unlockAudio() && b && !b.disabled) play(soundFor(b));
+    const b = target(e);
+    const already = played;
+    played = false;
+    if (state() === 'running') { if (!already && b && !b.disabled) play(soundFor(b)); return; }
+    const name = b && !b.disabled ? soundFor(b) : null;
+    unlockAudio().then(() => { if (name) play(name); });
   }, true);
+  // teclado y otros gestos que no pasan por el ratón
+  ['touchend', 'keydown'].forEach((t) => document.addEventListener(t, () => { if (state() !== 'running') unlockAudio(); }, { capture: true, passive: true }));
 }
