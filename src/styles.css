@@ -527,3 +527,17 @@ select {
 .btn.small { min-height: 40px; }
 .toggle-row button { min-height: 44px; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; scroll-behavior: auto !important; } }
+
+/* navegación por niveles del inicio */
+.home-brands { margin-top: 8px; }
+.home-back {
+  min-height: 44px; padding: 0 14px 0 6px; margin: 0 0 4px; cursor: pointer;
+  background: transparent; color: var(--text); border: none; font-family: inherit; font-size: 16px; font-weight: 600;
+}
+.home h2 { font-size: 22px; margin: 0 0 14px; }
+.home-all {
+  display: block; width: 100%; min-height: 48px; margin-top: 22px; cursor: pointer;
+  background: transparent; color: var(--text-dim); border: 1px solid var(--border); border-radius: var(--radius);
+  font-family: inherit; font-size: 14px;
+}
+.home-all:hover { color: var(--text); border-color: var(--accent); }

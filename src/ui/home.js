@@ -1,38 +1,83 @@
 import { FONT_SETS } from '../engine/fontSets.js';
 
-// Pantalla de inicio: entrar directo a lo que quieres hacer (un toque), sin
-// recorrer el menú de plantillas. Arriba, la marca; después, lo último que
-// usaste; después, los accesos grandes por tarea; abajo, «todo lo demás».
+// Menú de inicio, de arriba abajo:
+//   1. Marca (CJS · AJT · OES)
+//   2. Plantillas · Textos · Stickers
+//   3. Stickers → Recursos de marca · Temáticos
+//   4. Recursos de marca → logo y stickers de la marca; Temáticos → Huelga, etc.
+// Cada nivel es una pantalla con «‹ Volver»; el último toque abre la plantilla.
 
 const LOGO_BY_BRAND = { cjs: 'logo_cjs', oes: 'logo_oes', ajt: 'logo_ajt' };
 
-const MAIN_TILES = [
-  { id: 'sticker_location', title: 'Ubicación', hint: 'Sticker con pin y ciudad', icon: '📍' },
-  { id: 'sticker_title', title: 'Título', hint: 'Sticker de rótulo grande', icon: 'T' },
-  { id: 'sticker_body', title: 'Texto', hint: 'Sticker de cuerpo, con o sin fondo', icon: '¶' },
-  { id: 'photo_location', title: 'Foto + ubicación', hint: 'Tu foto con la ubicación', icon: '🖼' },
-  { id: 'builtin_repost_simple', title: 'Story con texto', hint: 'Título y cuerpo debajo', icon: '▤' },
-  { id: '@logo', title: 'Logo', hint: 'Logotipo de la marca', icon: '◭' },
+// Cada nodo: { title, hint, icon, id } abre una plantilla; { title, hint, icon, children } abre otro nivel.
+// children puede ser una función de la marca activa.
+const MENU = [
+  {
+    title: 'Plantillas', hint: 'Stories y fotos ya montadas', icon: '▤',
+    children: [
+      { title: 'Story con texto', hint: 'Título y cuerpo debajo', icon: '▤', id: 'builtin_repost_simple' },
+      { title: 'Story con publicación', hint: 'Título, publicación y cuerpo', icon: '▣', id: 'builtin_repost_shared' },
+      { title: 'Artículo', hint: 'Plantilla fija de artículo', icon: '☰', id: 'builtin_article' },
+      { title: 'Foto con ubicación', hint: 'Tu foto con la ubicación', icon: '🖼', id: 'photo_location' },
+    ],
+  },
+  {
+    title: 'Textos', hint: 'Rótulos y cuerpos para stories', icon: 'T',
+    children: [
+      { title: 'Título', hint: 'Rótulo grande', icon: 'T', id: 'sticker_title' },
+      { title: 'Texto', hint: 'Cuerpo de texto', icon: '¶', id: 'sticker_body' },
+      { title: 'Texto con fondo', hint: 'Cuerpo sobre pastilla de color', icon: '▭', id: 'sticker_body_pill' },
+      { title: 'Ubicación', hint: 'Pin con el nombre del lugar', icon: '📍', id: 'sticker_location' },
+    ],
+  },
+  {
+    title: 'Stickers', hint: 'PNG listos para descargar', icon: '✦',
+    children: [
+      {
+        title: 'Recursos de marca', hint: 'Logos y stickers de la marca', icon: '◭',
+        children: (brand) => [
+          { title: `Logo ${FONT_SETS[brand].label}`, hint: brand === 'ajt' ? 'Editable: pones la ubicación' : 'Todas las versiones de color', icon: '◭', id: LOGO_BY_BRAND[brand] },
+          ...(brand === 'cjs' ? [{ title: '¿Quieres militar?', hint: 'Sticker de captación', icon: '✊', id: 'sticker_militar' }] : []),
+        ],
+      },
+      {
+        title: 'Temáticos', hint: 'Campañas y movilizaciones', icon: '★',
+        children: [
+          { title: 'Huelga General 11N', hint: '4 stickers y fondo vertical', icon: '★', id: 'sticker_huelga_huelga-general' },
+        ],
+      },
+    ],
+  },
 ];
 
-const MORE_LINKS = [
-  { id: 'sticker_body_pill', label: 'Texto con fondo' },
-  { id: 'builtin_repost_shared', label: 'Story con publicación' },
-  { id: 'builtin_article', label: 'Artículo' },
-  { id: 'sticker_militar', label: '¿Quieres militar?' },
-  { id: 'sticker_huelga_huelga-general', label: 'Huelga General 11N' },
-];
+export function initHome({ root, getBrand, onBrand, onOpen, onOpenAll }) {
+  let path = []; // índices elegidos en cada nivel
 
-export function initHome({ root, getBrand, onBrand, onOpen, onOpenAll, getLast }) {
-  function tile({ title, hint, icon, id }) {
+  const resolve = (node, brand) => (typeof node.children === 'function' ? node.children(brand) : node.children);
+
+  function currentLevel(brand) {
+    let items = MENU;
+    const crumbs = [];
+    for (const i of path) {
+      const node = items[i];
+      if (!node || !node.children) break;
+      crumbs.push(node.title);
+      items = resolve(node, brand);
+    }
+    return { items, crumbs };
+  }
+
+  function tile(node, index, brand) {
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'home-tile';
     b.innerHTML = '<span class="home-tile-icon" aria-hidden="true"></span><strong></strong><span class="home-tile-hint"></span>';
-    b.querySelector('.home-tile-icon').textContent = icon;
-    b.querySelector('strong').textContent = title;
-    b.querySelector('.home-tile-hint').textContent = hint;
-    b.addEventListener('click', () => onOpen(id));
+    b.querySelector('.home-tile-icon').textContent = node.icon;
+    b.querySelector('strong').textContent = node.title;
+    b.querySelector('.home-tile-hint').textContent = node.hint;
+    b.addEventListener('click', () => {
+      if (node.children) { path.push(index); render(); } else onOpen(node.id);
+    });
     return b;
   }
 
@@ -41,10 +86,6 @@ export function initHome({ root, getBrand, onBrand, onOpen, onOpenAll, getLast }
     root.innerHTML = '';
     const inner = document.createElement('div');
     inner.className = 'home-inner';
-
-    const h = document.createElement('h1');
-    h.textContent = '¿Qué quieres hacer?';
-    inner.appendChild(h);
 
     const brands = document.createElement('div');
     brands.className = 'home-brands';
@@ -61,43 +102,36 @@ export function initHome({ root, getBrand, onBrand, onOpen, onOpenAll, getLast }
     });
     inner.appendChild(brands);
 
-    const last = getLast();
-    if (last) {
-      const c = document.createElement('button');
-      c.type = 'button';
-      c.className = 'home-continue';
-      c.innerHTML = '<span>Seguir con lo último</span><strong></strong>';
-      c.querySelector('strong').textContent = last.name;
-      c.addEventListener('click', () => onOpen(last.id));
-      inner.appendChild(c);
+    const { items, crumbs } = currentLevel(brand);
+    if (crumbs.length) {
+      const back = document.createElement('button');
+      back.type = 'button';
+      back.className = 'home-back';
+      back.textContent = `‹ ${crumbs.length > 1 ? crumbs[crumbs.length - 2] : 'Inicio'}`;
+      back.addEventListener('click', () => { path.pop(); render(); });
+      inner.appendChild(back);
+      const h = document.createElement('h2');
+      h.textContent = crumbs.join(' › ');
+      inner.appendChild(h);
     }
 
     const grid = document.createElement('div');
     grid.className = 'home-grid';
-    MAIN_TILES.forEach((t) => grid.appendChild(tile(t.id === '@logo' ? { ...t, id: LOGO_BY_BRAND[brand], hint: `Logotipo de ${FONT_SETS[brand].label}` } : t)));
+    items.forEach((node, i) => grid.appendChild(tile(node, i, brand)));
     inner.appendChild(grid);
 
-    const more = document.createElement('div');
-    more.className = 'home-more';
-    MORE_LINKS.forEach((m) => {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.textContent = m.label;
-      b.addEventListener('click', () => onOpen(m.id));
-      more.appendChild(b);
-    });
     const all = document.createElement('button');
     all.type = 'button';
-    all.textContent = 'Ver todas…';
+    all.className = 'home-all';
+    all.textContent = 'Ver lista completa de plantillas';
     all.addEventListener('click', onOpenAll);
-    more.appendChild(all);
-    inner.appendChild(more);
+    inner.appendChild(all);
 
     root.appendChild(inner);
   }
 
   return {
-    show() { render(); root.classList.remove('hidden'); const f = root.querySelector('.home-tile'); if (f) f.focus({ preventScroll: true }); },
+    show() { path = []; render(); root.classList.remove('hidden'); },
     hide() { root.classList.add('hidden'); },
     isOpen() { return !root.classList.contains('hidden'); },
   };
