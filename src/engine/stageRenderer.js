@@ -256,7 +256,7 @@ export class StageRenderer {
         this.transformer.nodes([]);
         this.layer.draw();
         return;
-      } else if (selectedData && (selectedData.type === 'logo' || selectedData.type === 'pin' || selectedData.type === 'image')) {
+      } else if (selectedData && (selectedData.cmpKind || selectedData.type === 'logo' || selectedData.type === 'pin' || selectedData.type === 'image')) {
         // logos e imágenes: solo por las esquinas y siempre proporcional (escala uniforme, nunca se deforma)
         this.transformer.enabledAnchors(['top-left', 'top-right', 'bottom-left', 'bottom-right']);
         this.transformer.rotateEnabled(true);
@@ -383,6 +383,15 @@ export class StageRenderer {
       patch.width = Math.max(minSize, node.width() * node.scaleX());
       patch.height = Math.max(minSize, node.height() * node.scaleY());
       patch.x = clampX(node.x());
+      // stickers de «Imagen + stickers»: al escalar, el texto crece con la caja
+      const cur = getState().layers.find((l) => l.id === id);
+      if (cur && (cur.cmpKind === 'title' || cur.cmpKind === 'body')) {
+        const k = Math.abs(node.scaleX());
+        patch.fontSize = cur.fontSize * k;
+        if (cur.letterSpacing) patch.letterSpacing = cur.letterSpacing * k;
+        if (cur.cmpCapH) patch.cmpCapH = cur.cmpCapH * k;
+        if (cur.lineWidth) patch.lineWidth = cur.lineWidth * k;
+      }
       // al resetear la escala a 1 hay que fijar también el ancho/alto reales
       // del nodo al nuevo tamaño calculado; si no, el nodo "salta" de vuelta
       // a su tamaño original en cuanto sueltas (la escala vuelve a 1 pero el
@@ -561,6 +570,7 @@ export class StageRenderer {
   resolveFontSize(d) {
     if (!d.autoFit) {
       const size = d.fontSize || 48;
+      if (d.fixedSize) return size; // stickers de «Imagen + stickers»: tamaño exacto
       // Los tamaños fijos de las plantillas están pensados para Acumin (muy
       // estrecha). Con OES/AJT el mismo tamaño puede no caber en la caja y el
       // texto se recortaba: ahí se reduce lo justo para que quepa. En CJS (y

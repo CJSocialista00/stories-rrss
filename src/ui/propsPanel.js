@@ -3,6 +3,7 @@ import { ARTICLE_SUBTITLE_GAP } from '../templates/builtins.js';
 import { COLORS, ASPECT_PRESETS, CANVAS_W, CANVAS_H, FONT_WIDTH_VARIANTS, FONT_WEIGHT_VARIANTS } from '../engine/constants.js';
 import { currentFontSet, brandColors } from '../engine/fontSets.js';
 import { recolorThumb } from '../lib/recolor.js';
+import { swatches } from './swatches.js';
 import { AJT_LOGO_VARIANTS, AJT_LOGO_LAYOUTS, ajtColor } from '../templates/ajtLogo.js';
 import { LOGO_KINDS, logoKindOf, PIN_VARIANTS } from '../engine/stageRenderer.js';
 
@@ -70,21 +71,8 @@ export function renderQuickPanel(container, { onChange } = {}) {
   // Solo colores corporativos (sin selector libre). Se reacciona en
   // pointerdown: en el móvil, si el teclado está abierto, el primer toque lo
   // cierra, el panel se recoloca y el "click" acababa fuera del botón.
-  const quickColors = document.createElement('div');
-  quickColors.className = 'toggle-row';
-  const currentColor = (text.color || COLORS.white).toLowerCase();
-  brandColors().map((c) => [c.label, c.hex]).forEach(([label, hex]) => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.textContent = label;
-    if (currentColor === hex.toLowerCase()) b.classList.add('active');
-    b.addEventListener('pointerdown', (e) => {
-      e.preventDefault(); // que no robe el foco ni dispare el cierre del teclado antes de aplicar
-      if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-      patchText({ color: hex });
-      renderQuickPanel(container, { onChange });
-    });
-    quickColors.appendChild(b);
+  const quickColors = swatches(text.color || COLORS.white, {
+    onPick: (hex) => { patchText({ color: hex }); renderQuickPanel(container, { onChange }); },
   });
   g.appendChild(row('Color', quickColors));
 
@@ -167,17 +155,7 @@ export function renderGalleryPanel(container, { gallery, currentKey, color, onSe
   g.appendChild(grid);
 
   if (current.recolor) {
-    const colors = document.createElement('div');
-    colors.className = 'toggle-row wrap';
-    [['Original', null], ...brandColors().map((c) => [c.label, c.hex])].forEach(([label, hex]) => {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.textContent = label;
-      if ((color || null) === hex) b.classList.add('active');
-      if (hex) { b.style.borderLeftColor = hex; b.classList.add('swatch'); }
-      b.addEventListener('click', () => onColor(hex));
-      colors.appendChild(b);
-    });
+    const colors = swatches(color, { original: true, onPick: (hex) => onColor(hex) });
     const colorRow = row('Color', colors);
     colorRow.style.marginTop = '12px';
     g.appendChild(colorRow);
@@ -228,7 +206,7 @@ export function renderAjtLogoPanel(container, { logo, onChange, onDownload, onDo
       b.type = 'button';
       b.textContent = o.label;
       if (o.key === current) b.classList.add('active');
-      if (swatch) { b.style.borderLeftColor = ajtColor(o.bg); b.classList.add('swatch'); }
+      if (swatch) { b.style.setProperty('--dot', ajtColor(o.bg)); b.classList.add('swatch'); }
       // pointerdown: en el móvil el primer toque cierra el teclado y el click se perdía
       b.addEventListener('pointerdown', (e) => {
         e.preventDefault();

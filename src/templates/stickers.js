@@ -1,5 +1,6 @@
 import { buildGalleryDoc, GALLERIES } from './gallery.js';
 import { buildAjtLogoDoc } from './ajtLogo.js';
+import { buildComposeDoc } from './compose.js';
 import { buildTextTitleDoc, buildTextBodyDoc, buildTextBodyPillDoc, buildLocationStickerDoc, buildPhotoLocationDoc } from './locationGenerator.js';
 
 // Plantillas de arranque para los generadores rápidos. El contenido real se
@@ -16,6 +17,7 @@ export const STICKER_TEMPLATES = [
 
 export const PHOTO_TEMPLATES = [
   { id: 'photo_location', name: 'Foto con ubicación', builtin: true, category: 'Fotos', doc: () => buildPhotoLocationDoc('MADRID') },
+  { id: 'compose_photo', name: 'Imagen + stickers', builtin: true, category: 'Fotos', doc: () => buildComposeDoc() },
 ];
 
 // Sección propia del menú: un acceso por sticker, todos con la misma galería

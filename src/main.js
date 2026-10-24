@@ -6,6 +6,7 @@ import { listTemplates, loadTemplateDoc, saveAsNewTemplate, deleteTemplate } fro
 import { renderLayerList } from './ui/layerList.js';
 import { renderProps, renderQuickPanel, renderGalleryPanel, renderAjtLogoPanel } from './ui/propsPanel.js';
 import { initHome } from './ui/home.js';
+import { renderComposePanel } from './ui/composePanel.js';
 import { drawAjtLogo, ensureAjtLogoAssets, ajtVariant, ajtColor } from './templates/ajtLogo.js';
 import { GALLERIES, galleryItem, galleryFileName, galleryColorFileName } from './templates/gallery.js';
 import { recolorBlob } from './lib/recolor.js';
@@ -240,6 +241,10 @@ function refreshProps() {
     });
     return;
   }
+  if (state.quickGenerator === 'compose') {
+    renderComposePanel(propsContentEl, { renderer, onChange: refreshCanvas, onRefresh: refreshAll, requestUpload: (layerId) => window.dispatchEvent(new CustomEvent('request-image-upload', { detail: { layerId } })) });
+    return;
+  }
   if (state.quickGenerator === 'logoAjt') {
     const img = state.layers.find((l) => l.type === 'image');
     if (!img) return;
@@ -306,10 +311,16 @@ function closeDrawer() { templatesDrawer.classList.add('hidden'); }
 
 // Juego de tipografía (CJS / OES / AJT): cambia solo la letra de todas las
 // plantillas; textos, colores y composición se quedan como están.
+// el color de acento de la interfaz es el rojo de la marca activa
+function applyAccent() {
+  document.documentElement.style.setProperty('--accent', brandColor('accent'));
+}
+
 async function changeBrand(key) {
   if (key === getFontSetKey()) return;
   const previous = getFontSetKey();
   setFontSetKey(key);
+  applyAccent();
   // el diseño en curso pasa a los colores de la nueva marca (rojo → rojo
   // de la marca, blanco, negro); el resto de plantillas lo hace al abrirse
   getState().layers.slice().forEach((l) => {
@@ -561,6 +572,7 @@ async function finalizeExport(dataURL) {
 }
 
 async function init() {
+  applyAccent();
   await waitFonts();
 
   renderer = new StageRenderer(stageContainer, {
@@ -763,7 +775,7 @@ async function init() {
     pendingImageLayerId = null;
     fileInputImage.value = '';
     readImageScaled(file).then(async ({ src, width, height }) => {
-      if (getState().quickGenerator === 'photoLocation' && width && height) {
+      if ((getState().quickGenerator === 'photoLocation' || getState().quickGenerator === 'compose') && width && height) {
         // Foto con ubicación: el lienzo toma el tamaño y la proporción REALES
         // de la foto (antes se recortaba a un 4:5 fijo); la ubicación se
         // recoloca después sobre ese tamaño en regenerateQuick().

@@ -18,6 +18,7 @@ const MENU = [
       { title: 'Story con texto', hint: 'Título y cuerpo debajo', icon: '▤', id: 'builtin_repost_simple' },
       { title: 'Story con publicación', hint: 'Título, publicación y cuerpo', icon: '▣', id: 'builtin_repost_shared' },
       { title: 'Artículo', hint: 'Plantilla fija de artículo', icon: '☰', id: 'builtin_article' },
+      { title: 'Imagen + stickers', hint: 'Tu imagen con stickers y textos que mueves a mano', icon: '✚', id: 'compose_photo' },
       { title: 'Foto con ubicación', hint: 'Tu foto con la ubicación', icon: '🖼', id: 'photo_location' },
     ],
   },
@@ -120,12 +121,7 @@ export function initHome({ root, getBrand, onBrand, onOpen, onOpenAll }) {
     items.forEach((node, i) => grid.appendChild(tile(node, i, brand)));
     inner.appendChild(grid);
 
-    const all = document.createElement('button');
-    all.type = 'button';
-    all.className = 'home-all';
-    all.textContent = 'Ver lista completa de plantillas';
-    all.addEventListener('click', onOpenAll);
-    inner.appendChild(all);
+    // (lista completa de plantillas oculta por ahora: todo el menú es este)
 
     root.appendChild(inner);
   }
