@@ -17,6 +17,11 @@ export const GALLERIES = {
     title: 'Logotipo CJS',
     zipName: 'logotipo_cjs.zip',
     items: [
+      { key: 'icono-blanco', label: 'Icono · blanco', src: './assets/logos/cjs/cjs-icono-blanco.png', width: 392, height: 391 },
+      { key: 'icono-negro', label: 'Icono · negro claro', src: './assets/logos/cjs/cjs-icono-negro.png', width: 392, height: 391, lightPreview: true },
+      { key: 'icono-rojo', label: 'Icono · rojo', src: './assets/logos/cjs/cjs-icono-rojo.png', width: 392, height: 391 },
+      { key: 'icono-blanco-triangulo-rojo', label: 'Icono · blanco, triángulo rojo', src: './assets/logos/cjs/cjs-icono-blanco-triangulo-rojo.png', width: 392, height: 391 },
+      { key: 'icono-negro-triangulo-rojo', label: 'Icono · negro claro, triángulo rojo', src: './assets/logos/cjs/cjs-icono-negro-triangulo-rojo.png', width: 392, height: 391, lightPreview: true },
       { key: 'blanco', label: 'Todo blanco', src: './assets/logos/cjs/cjs-blanco.png', width: 1380, height: 392 },
       { key: 'negro', label: 'Negro claro', src: './assets/logos/cjs/cjs-negro.png', width: 1380, height: 392, lightPreview: true },
       { key: 'rojo', label: 'Todo rojo', src: './assets/logos/cjs/cjs-rojo.png', width: 1380, height: 392 },

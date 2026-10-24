@@ -185,3 +185,27 @@ input[type="range"] { accent-color: var(--accent); height: 32px; }
 
 .cp-size-btns { display: flex; gap: 12px; }
 .cp-size { align-items: center; }
+
+/* inicio: botones grandes en filas, uno encima de otro */
+.home-grid { grid-template-columns: 1fr !important; gap: 12px; }
+.home-tile { flex-direction: row; align-items: center; gap: 16px; min-height: 92px; padding: 16px 18px; }
+.home-tile-icon { flex: 0 0 auto; width: 52px; height: 52px; font-size: 26px; margin: 0; }
+.home-tile strong { display: block; font-size: 19px; }
+.home-tile .home-tile-hint { display: block; font-size: 13px; margin-top: 2px; }
+.home-tile > strong, .home-tile > .home-tile-hint { flex: 1 1 auto; }
+.home-tile { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 16px; row-gap: 0; align-items: center; }
+.home-tile-icon { grid-row: 1 / span 2; }
+.home-back { font-size: 17px; }
+#btnHome { font-size: 26px; padding-bottom: 3px; }
+
+/* sombra de los stickers */
+.cp-shadow-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.cp-shadow-label { font-weight: 600; }
+.cp-switch { position: relative; width: 56px; height: 32px; border-radius: 999px; border: none; background: var(--panel-light); box-shadow: inset 0 0 0 1px var(--border); cursor: pointer; padding: 0; }
+.cp-switch i { position: absolute; top: 4px; left: 4px; width: 24px; height: 24px; border-radius: 50%; background: #fff; transition: transform 0.15s; }
+.cp-switch.on { background: var(--accent); }
+.cp-switch.on i { transform: translateX(24px); }
+.cp-slider { display: block; margin-top: 8px; }
+.cp-slider-text { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-dim); }
+.cp-slider-text b { color: var(--text); }
+.cp-slider input[type="range"] { width: 100%; min-height: 36px; }

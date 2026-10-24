@@ -12,6 +12,9 @@ import { drawAjtLogo, ensureAjtLogoAssets, AJT_LOGO_DEFAULTS } from './ajtLogo.j
 // sticker es una capa normal del documento con unos campos `cmp*` que dicen
 // qué es y permiten editarlo después (texto, color, tamaño).
 
+// Sombra por defecto de cada sticker: difusa, negra, al 70 % (todo ajustable en el panel)
+export const SHADOW_DEFAULTS = { shadowOn: true, shadowBlurPct: 35, shadowDistPct: 20, shadowOpacity: 0.7 };
+
 export const COMPOSE_DEFAULT_SIZE = { width: 1080, height: 1350 };
 
 export function buildComposeDoc() {
@@ -54,7 +57,7 @@ async function titleLayer(text, capH, color) {
       name: 'Título', role: 'title', italic: true, locked: false, autoFit: false, text: g.text, color, align: 'left',
       x: pos.x, y: pos.y, width: g.textW, height: g.textH, fontSize: g.fontSize, letterSpacing: g.letterSpacing,
     }),
-    fixedSize: true, cmpKind: 'title', cmpCapH: capH,
+    fixedSize: true, cmpKind: 'title', cmpCapH: capH, ...SHADOW_DEFAULTS,
   };
 }
 export async function editTitle(layer, patch) {
@@ -84,7 +87,7 @@ export async function addBodySticker(text = 'Escribe aquí tu texto. Usa **negri
       name: 'Texto', role: 'body', locked: false, autoFit: false, text, color: brandColor('white'), align: 'left', widthVariant: 'normal',
       x: pos.x, y: pos.y, width: m.width, height: m.height, fontSize,
     }),
-    fixedSize: true, cmpKind: 'body', lineWidth,
+    fixedSize: true, cmpKind: 'body', lineWidth, ...SHADOW_DEFAULTS,
   };
   addLayer(layer);
   return layer;
@@ -130,7 +133,7 @@ export async function addLocationSticker(city = 'MADRID') {
   const pos = centered(w, h);
   const layer = {
     ...makeImageLayer({ name: 'Ubicación', src: r.src, fit: 'contain', locked: false, x: pos.x, y: pos.y, width: w, height: h }),
-    cmpKind: 'location', cmpText: r.city, cmpColor: color,
+    cmpKind: 'location', cmpText: r.city, cmpColor: color, ...SHADOW_DEFAULTS,
   };
   addLayer(layer);
   return layer;
@@ -149,7 +152,7 @@ export function addImageSticker(item, { name, widthRatio = 0.5 } = {}) {
   const pos = centered(w, h);
   const layer = {
     ...makeImageLayer({ name: name || item.label, src: item.src, fit: 'contain', locked: false, x: pos.x, y: pos.y, width: w, height: h }),
-    cmpKind: 'image', cmpRecolor: !!item.recolor, tint: null,
+    cmpKind: 'image', cmpRecolor: !!item.recolor, tint: null, ...SHADOW_DEFAULTS,
   };
   addLayer(layer);
   return layer;
@@ -165,7 +168,7 @@ export async function addAjtLogoSticker() {
   const pos = centered(w, h);
   const layer = {
     ...makeImageLayer({ name: 'Logo AJT', src: logo.canvas.toDataURL('image/png'), fit: 'contain', locked: false, x: pos.x, y: pos.y, width: w, height: h }),
-    cmpKind: 'ajtLogo', ...params,
+    cmpKind: 'ajtLogo', ...params, ...SHADOW_DEFAULTS,
   };
   addLayer(layer);
   return layer;

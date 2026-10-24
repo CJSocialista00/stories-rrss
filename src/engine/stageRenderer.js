@@ -79,6 +79,12 @@ export const LOGO_KINDS = [
   },
 ];
 
+// Logo de la marca activa para cada variante de fondo (assets/logo/brand/<marca>/...)
+export function logoSrcFor(assetKey) {
+  const key = assetKey === 'full' ? 'icon-on-black' : assetKey;
+  return `./assets/logo/brand/${currentFontSet().key}/${key}.png`;
+}
+
 export function logoKindOf(assetKey) {
   const normalized = assetKey === 'full' ? 'icon-on-black' : assetKey;
   return normalized.startsWith('wordmark') ? 'wordmark' : 'icon';
@@ -228,6 +234,7 @@ export class StageRenderer {
         await this.updateNode(node, layerData);
       }
       node.visible(layerData.visible !== false);
+      this.applyShadow(node, layerData);
     }
 
     // eliminar nodos huérfanos
@@ -427,6 +434,25 @@ export class StageRenderer {
     }
   }
 
+  // Sombra difusa de los stickers (ajustable en «Imagen + stickers»). Los grupos
+  // (cuerpo de texto, imágenes) no tienen sombra propia: va en cada pieza.
+  applyShadow(node, d) {
+    if (d.shadowOn === undefined && !node.getAttr('_shadowed')) return;
+    const { width, height } = this.canvasSize();
+    const base = Math.min(width, height);
+    const blur = ((d.shadowBlurPct ?? 35) / 100) * base * 0.05;
+    const dist = ((d.shadowDistPct ?? 20) / 100) * base * 0.03;
+    const leaves = node.getType() === 'Shape' ? [node] : node.find((n) => n.getType() === 'Shape' && n.name() !== 'placeholder' && n.name() !== 'placeholderLabel');
+    leaves.forEach((leaf) => {
+      if (d.shadowOn) {
+        leaf.setAttrs({ shadowEnabled: true, shadowColor: '#000000', shadowBlur: blur, shadowOpacity: d.shadowOpacity ?? 0.7, shadowOffsetX: 0, shadowOffsetY: dist });
+      } else {
+        leaf.shadowEnabled(false);
+      }
+    });
+    node.setAttr('_shadowed', !!d.shadowOn);
+  }
+
   async updateNode(node, layerData) {
     switch (layerData.type) {
       case 'image': return this.updateImageNode(node, layerData);
@@ -529,9 +555,11 @@ export class StageRenderer {
   async loadLogoImage(d) {
     const assets = this.assetMapFor(d);
     if (d.type === 'pin' && d.tint) return tintedPin(PIN_ASSETS['pin-on-black'], d.tint);
+    if (d.type === 'logo') return loadImage(logoSrcFor(d.asset));
     return loadImage(assets[d.asset] || assets.full);
   }
   logoImageKey(d) {
+    if (d.type === 'logo') return `${currentFontSet().key}:${d.asset}`;
     return d.type === 'pin' && d.tint ? `tint:${d.tint}` : d.asset;
   }
   async createLogoNode(d) {

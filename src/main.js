@@ -646,7 +646,7 @@ async function init() {
       } catch { return null; }
     },
   });
-  document.getElementById('btnHome').addEventListener('click', () => home.show());
+  document.getElementById('btnHome').addEventListener('click', () => home.showPrevious());
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
     if (home.isOpen()) home.hide();

@@ -5,7 +5,7 @@ import { currentFontSet, brandColors } from '../engine/fontSets.js';
 import { recolorThumb } from '../lib/recolor.js';
 import { swatches } from './swatches.js';
 import { AJT_LOGO_VARIANTS, AJT_LOGO_LAYOUTS, ajtColor } from '../templates/ajtLogo.js';
-import { LOGO_KINDS, logoKindOf, PIN_VARIANTS } from '../engine/stageRenderer.js';
+import { LOGO_KINDS, logoKindOf, logoSrcFor, PIN_VARIANTS } from '../engine/stageRenderer.js';
 
 function row(labelText, inputEl) {
   const r = document.createElement('div');
@@ -703,7 +703,7 @@ export function renderProps(container, layerId, { onChange, onRemove } = {}) {
       const swatch = document.createElement('span');
       swatch.className = `logo-variant-swatch bg-${variant.key.replace('icon-', '').replace('wordmark-', '')}`;
       const img = document.createElement('img');
-      img.src = variant.src;
+      img.src = logoSrcFor(variant.key);
       img.alt = variant.label;
       swatch.appendChild(img);
       const label = document.createElement('span');

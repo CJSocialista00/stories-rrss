@@ -53,6 +53,7 @@ const MENU = [
 
 export function initHome({ root, getBrand, onBrand, onOpen, onOpenAll }) {
   let path = []; // índices elegidos en cada nivel
+  let openedFrom = []; // nivel del menú desde el que se abrió la plantilla en curso
 
   const resolve = (node, brand) => (typeof node.children === 'function' ? node.children(brand) : node.children);
 
@@ -77,7 +78,7 @@ export function initHome({ root, getBrand, onBrand, onOpen, onOpenAll }) {
     b.querySelector('strong').textContent = node.title;
     b.querySelector('.home-tile-hint').textContent = node.hint;
     b.addEventListener('click', () => {
-      if (node.children) { path.push(index); render(); } else onOpen(node.id);
+      if (node.children) { path.push(index); render(); } else { openedFrom = path.slice(); onOpen(node.id); }
     });
     return b;
   }
@@ -128,6 +129,8 @@ export function initHome({ root, getBrand, onBrand, onOpen, onOpenAll }) {
 
   return {
     show() { path = []; render(); root.classList.remove('hidden'); },
+    // vuelve al menú justo en el nivel desde el que se abrió lo que estás editando
+    showPrevious() { path = openedFrom.slice(); render(); root.classList.remove('hidden'); },
     hide() { root.classList.add('hidden'); },
     isOpen() { return !root.classList.contains('hidden'); },
   };
