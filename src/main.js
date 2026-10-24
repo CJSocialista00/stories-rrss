@@ -6,6 +6,8 @@ import { listTemplates, loadTemplateDoc, saveAsNewTemplate, deleteTemplate } fro
 import { renderLayerList } from './ui/layerList.js';
 import { renderProps, renderQuickPanel, renderGalleryPanel, renderAjtLogoPanel } from './ui/propsPanel.js';
 import { initHome } from './ui/home.js';
+import { paintIcons, icon } from './ui/icons.js';
+import { initUiSounds } from './lib/sound.js';
 import { renderComposePanel } from './ui/composePanel.js';
 import { drawAjtLogo, ensureAjtLogoAssets, ajtVariant, ajtColor } from './templates/ajtLogo.js';
 import { GALLERIES, galleryItem, galleryFileName, galleryColorFileName } from './templates/gallery.js';
@@ -314,6 +316,7 @@ function closeDrawer() { templatesDrawer.classList.add('hidden'); }
 // el color de acento de la interfaz es el rojo de la marca activa
 function applyAccent() {
   document.documentElement.style.setProperty('--accent', brandColor('accent'));
+  document.documentElement.style.setProperty('--display', `"${titleFamily()}", "Acumin Variable", sans-serif`);
 }
 
 async function changeBrand(key) {
@@ -382,7 +385,7 @@ function populateTemplateList() {
       if (!t.builtin) {
         const del = document.createElement('button');
         del.className = 'tpl-del';
-        del.textContent = '🗑';
+        del.innerHTML = icon('trash', 18);
         del.addEventListener('click', (e) => {
           e.stopPropagation();
           if (confirm(`¿Eliminar la plantilla "${t.name}"?`)) {
@@ -490,7 +493,7 @@ async function applyTemplate(id, { fresh = false } = {}) {
 function updateExportButton() {
   const btn = document.getElementById('btnExport');
   const quick = !!getState().quickGenerator;
-  btn.textContent = quick ? '⬇ Descargar' : 'Exportar ▾';
+  btn.querySelector('.btn-lbl').textContent = quick ? 'Descargar' : 'Exportar';
   btn.setAttribute('aria-label', quick ? 'Descargar PNG' : 'Exportar');
 }
 
@@ -573,6 +576,8 @@ async function finalizeExport(dataURL) {
 
 async function init() {
   applyAccent();
+  paintIcons();
+  initUiSounds();
   await waitFonts();
 
   renderer = new StageRenderer(stageContainer, {

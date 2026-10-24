@@ -1,6 +1,7 @@
 import { getState, updateLayer, removeLayer, selectLayer } from '../engine/state.js';
 import { getFontSetKey } from '../engine/fontSets.js';
 import { swatches } from './swatches.js';
+import { icon } from './icons.js';
 import { GALLERIES } from '../templates/gallery.js';
 import { AJT_LOGO_VARIANTS, AJT_LOGO_LAYOUTS } from '../templates/ajtLogo.js';
 import {
@@ -23,7 +24,8 @@ function el(tag, cls, text) {
   return e;
 }
 function button(label, cls, onClick, aria) {
-  const b = el('button', cls, label);
+  const b = el('button', cls);
+  if (label.startsWith('<svg')) b.innerHTML = label; else b.textContent = label;
   b.type = 'button';
   if (aria) b.setAttribute('aria-label', aria);
   b.addEventListener('click', onClick);
@@ -44,8 +46,8 @@ function sizeControl(layer, onChange) {
   const step = (ratio) => { scaleLayer(getState().layers.find((l) => l.id === layer.id), ratio); onChange(); };
   wrap.appendChild(el('span', 'cp-size-hint', 'Tamaño'));
   const btns = el('div', 'cp-size-btns');
-  btns.appendChild(button('−', 'cp-round', () => step(1 / 1.12), 'Más pequeño'));
-  btns.appendChild(button('+', 'cp-round', () => step(1.12), 'Más grande'));
+  btns.appendChild(button(icon('minus', 22), 'cp-round', () => step(1 / 1.12), 'Más pequeño'));
+  btns.appendChild(button(icon('plus', 22), 'cp-round', () => step(1.12), 'Más grande'));
   wrap.appendChild(btns);
   return wrap;
 }
@@ -122,7 +124,7 @@ export function renderComposePanel(container, { renderer, onChange, onRefresh, r
     const head = el('div', 'cp-head');
     head.appendChild(el('h3', 'cp-name', KIND_LABEL[selected.cmpKind] || 'Elemento'));
     const actions = el('div', 'cp-actions');
-    actions.appendChild(button('🗑', 'cp-icon-danger', () => { removeLayer(selected.id); onRefresh(); }, 'Quitar este elemento'));
+    actions.appendChild(button(icon('trash', 22), 'cp-icon-danger', () => { removeLayer(selected.id); onRefresh(); }, 'Quitar este elemento'));
     actions.appendChild(button('Listo', 'cp-done', () => { selectLayer(null); onRefresh(); }));
     head.appendChild(actions);
     root.appendChild(head);
@@ -195,7 +197,7 @@ export function renderComposePanel(container, { renderer, onChange, onRefresh, r
   if (view === 'logos' || view === 'tematicos') {
     const brand = getFontSetKey();
     const head = el('div', 'cp-head');
-    head.appendChild(button('‹ Volver', 'cp-back', () => setView('main')));
+    head.appendChild(button(`${icon('back', 20)}Volver`, 'cp-back', () => setView('main')));
     head.appendChild(el('h3', 'cp-name', view === 'logos' ? 'Logo' : 'Temáticos'));
     root.appendChild(head);
     const grid = el('div', 'cp-picker');
@@ -226,22 +228,24 @@ export function renderComposePanel(container, { renderer, onChange, onRefresh, r
 
   // ---------- principal ----------
   const photo = section('Imagen');
-  photo.appendChild(button(base && base.src ? '📷  Cambiar imagen' : '📷  Subir imagen', base && base.src ? 'cp-secondary' : 'cp-primary', () => requestUpload(base.id)));
+  photo.appendChild(button(`${icon('upload', 22)}${base && base.src ? 'Cambiar imagen' : 'Subir imagen'}`, base && base.src ? 'cp-secondary' : 'cp-primary', () => requestUpload(base.id)));
   if (!(base && base.src)) photo.appendChild(el('p', 'cp-hint', 'La imagen será tu marco. Después añade stickers y textos encima.'));
   root.appendChild(photo);
 
   const add = section('Añadir');
   const grid = el('div', 'cp-add');
   [
-    ['📍', 'Ubicación', () => afterAdd(addLocationSticker())],
-    ['T', 'Título', () => afterAdd(addTitleSticker())],
-    ['¶', 'Texto', () => afterAdd(addBodySticker())],
-    ['◭', 'Logo', () => setView('logos')],
-    ['★', 'Temáticos', () => setView('tematicos')],
-  ].forEach(([icon, label, fn]) => {
+    ['pin', 'Ubicación', () => afterAdd(addLocationSticker())],
+    ['title', 'Título', () => afterAdd(addTitleSticker())],
+    ['text', 'Texto', () => afterAdd(addBodySticker())],
+    ['logo', 'Logo', () => setView('logos')],
+    ['flag', 'Temáticos', () => setView('tematicos')],
+  ].forEach(([iconName, label, fn]) => {
     const b = el('button', 'cp-add-btn');
     b.type = 'button';
-    b.appendChild(el('span', 'ic', icon));
+    const ic = el('span', 'ic');
+    ic.innerHTML = icon(iconName, 26);
+    b.appendChild(ic);
     b.appendChild(el('span', '', label));
     b.addEventListener('click', fn);
     grid.appendChild(b);

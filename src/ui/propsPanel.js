@@ -4,6 +4,7 @@ import { COLORS, ASPECT_PRESETS, CANVAS_W, CANVAS_H, FONT_WIDTH_VARIANTS, FONT_W
 import { currentFontSet, brandColors } from '../engine/fontSets.js';
 import { recolorThumb } from '../lib/recolor.js';
 import { swatches } from './swatches.js';
+import { icon } from './icons.js';
 import { AJT_LOGO_VARIANTS, AJT_LOGO_LAYOUTS, ajtColor } from '../templates/ajtLogo.js';
 import { LOGO_KINDS, logoKindOf, logoSrcFor, PIN_VARIANTS } from '../engine/stageRenderer.js';
 
@@ -166,7 +167,7 @@ export function renderGalleryPanel(container, { gallery, currentKey, color, onSe
   dl.className = 'btn';
   dl.style.width = '100%';
   dl.style.marginTop = '12px';
-  dl.textContent = '⬇ Descargar este sticker';
+  dl.innerHTML = `${icon('download', 20)} Descargar este sticker`;
   dl.addEventListener('click', onDownload);
   g.appendChild(dl);
 
@@ -176,7 +177,7 @@ export function renderGalleryPanel(container, { gallery, currentKey, color, onSe
     all.className = 'btn';
     all.style.width = '100%';
     all.style.marginTop = '8px';
-    all.textContent = `⬇ Descargar todos (${gallery.items.length}, ZIP)`;
+    all.innerHTML = `${icon('download', 20)} Descargar todos (${gallery.items.length}, ZIP)`;
     all.addEventListener('click', onDownloadAll);
     g.appendChild(all);
   }
@@ -225,14 +226,14 @@ export function renderAjtLogoPanel(container, { logo, onChange, onDownload, onDo
   dl.type = 'button';
   dl.className = 'btn';
   dl.style.cssText = 'width:100%;margin-top:12px';
-  dl.textContent = '⬇ Descargar logo (PNG)';
+  dl.innerHTML = `${icon('download', 20)} Descargar logo (PNG)`;
   dl.addEventListener('click', onDownload);
   g.appendChild(dl);
   const sq = document.createElement('button');
   sq.type = 'button';
   sq.className = 'btn';
   sq.style.cssText = 'width:100%;margin-top:8px';
-  sq.textContent = '⬇ Para Instagram (cuadrado)';
+  sq.innerHTML = `${icon('download', 20)} Para Instagram (cuadrado)`;
   sq.addEventListener('click', onDownloadSquare);
   g.appendChild(sq);
   container.appendChild(g);
