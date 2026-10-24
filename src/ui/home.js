@@ -27,12 +27,12 @@ const MENU = [
       { title: 'Título', hint: 'Rótulo grande', icon: 'T', id: 'sticker_title' },
       { title: 'Texto', hint: 'Cuerpo de texto', icon: '¶', id: 'sticker_body' },
       { title: 'Texto con fondo', hint: 'Cuerpo sobre pastilla de color', icon: '▭', id: 'sticker_body_pill' },
-      { title: 'Ubicación', hint: 'Pin con el nombre del lugar', icon: '📍', id: 'sticker_location' },
     ],
   },
   {
     title: 'Stickers', hint: 'PNG listos para descargar', icon: '✦',
     children: [
+      { title: 'Ubicación', hint: 'Pin con el nombre del lugar', icon: '📍', id: 'sticker_location' },
       {
         title: 'Recursos de marca', hint: 'Logos y stickers de la marca', icon: '◭',
         children: (brand) => [
