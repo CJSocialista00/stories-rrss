@@ -61,7 +61,7 @@ export const FONT_SETS = {
     label: 'AJT',
     detail: 'Helvetica Neue · Thunder',
     titleTracking: -0.01,
-    colors: palette(['white', 'Blanco', '#ffffff'], ['accent', 'Rojo', '#f42a39'], ['dark', 'Negro', '#000000'], ['cream', 'Crema', '#f3f3e9']),
+    colors: palette(['white', 'Blanco', '#ffffff'], ['accent', 'Rojo', '#ff002c'], ['dark', 'Negro', '#000000'], ['cream', 'Crema', '#f3f3e8']),
     // la caligráfica no se lee en mayúsculas: el sticker de título respeta lo escrito
     keepCaseWidths: ['playground'],
     // el ancho elige la familia: extracondensed (título por defecto) = Thunder
@@ -90,6 +90,7 @@ export const FONT_FILES = {
   'AJT Helvetica Neue Condensed': { dir: 'ajt', base: 'helvetica-neue-condensed', weights: [900] },
   'AJT Thunder': { dir: 'ajt', base: 'thunder-extrabold', weights: [800] },
   'AJT PP Playground': { dir: 'ajt', base: 'pp-playground', weights: [500] },
+  'AJT Open Sauce Sans': { dir: 'ajt', base: 'open-sauce-sans', weights: [400, 500, 700] },
   'OES Mozilla Text': { dir: 'oes', base: 'mozilla-text', weights: [400, 700] },
   'OES Clandy': { dir: 'oes', base: 'clandy', weights: [400] },
 };

@@ -1,4 +1,5 @@
 import { buildGalleryDoc, GALLERIES } from './gallery.js';
+import { buildAjtLogoDoc } from './ajtLogo.js';
 import { buildTextTitleDoc, buildTextBodyDoc, buildTextBodyPillDoc, buildLocationStickerDoc, buildPhotoLocationDoc } from './locationGenerator.js';
 
 // Plantillas de arranque para los generadores rápidos. El contenido real se
@@ -26,3 +27,11 @@ export const HUELGA_TEMPLATES = GALLERIES.huelga11n.items.map((item) => ({
   category: 'Stickers Huelga General 11N',
   doc: () => buildGalleryDoc('huelga11n', item.key),
 }));
+
+// Sección «Logos»: logotipos de cada marca (descarga directa en PNG). El de AJT
+// es editable (nombre de la ubicación).
+export const LOGO_TEMPLATES = [
+  { id: 'logo_ajt', name: 'AJT · logo con ubicación', builtin: true, category: 'Logos', doc: () => buildAjtLogoDoc() },
+  { id: 'logo_cjs', name: 'CJS · logotipo', builtin: true, category: 'Logos', doc: () => buildGalleryDoc('logosCjs') },
+  { id: 'logo_oes', name: 'OES · logotipo', builtin: true, category: 'Logos', doc: () => buildGalleryDoc('logosOes') },
+];

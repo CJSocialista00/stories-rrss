@@ -4,7 +4,8 @@ import { StageRenderer, exportPNG, exportLayersSeparately } from './engine/stage
 import { makeTextLayer, makeImageLayer, makeLogoLayer, makePinLayer, makeFrameLayer, makeBackgroundLayer } from './engine/layerFactory.js';
 import { listTemplates, loadTemplateDoc, saveAsNewTemplate, deleteTemplate } from './templates/store.js';
 import { renderLayerList } from './ui/layerList.js';
-import { renderProps, renderQuickPanel, renderGalleryPanel } from './ui/propsPanel.js';
+import { renderProps, renderQuickPanel, renderGalleryPanel, renderAjtLogoPanel } from './ui/propsPanel.js';
+import { drawAjtLogo, ensureAjtLogoAssets, ajtVariant, ajtColor } from './templates/ajtLogo.js';
 import { GALLERIES, galleryItem, galleryFileName, galleryColorFileName } from './templates/gallery.js';
 import { recolorBlob } from './lib/recolor.js';
 import { dataURLToBlob, dataURLToUint8Array, downloadBlob } from './lib/download.js';
@@ -48,6 +49,14 @@ function regenerateQuick() {
     if (!item) return;
     setCanvasSize(item.width, item.height);
     updateLayer(img.id, { src: item.src, x: 0, y: 0, width: item.width, height: item.height, fit: 'contain', locked: true, tint: item.recolor ? img.galleryColor || null : null }, { history: false });
+    return;
+  }
+  if (mode === 'logoAjt') {
+    const img = state.layers.find((l) => l.type === 'image');
+    if (!img) return;
+    const logo = drawAjtLogo(img);
+    setCanvasSize(logo.width, logo.height);
+    updateLayer(img.id, { src: logo.canvas.toDataURL('image/png'), x: 0, y: 0, width: logo.width, height: logo.height, fit: 'contain', locked: true }, { history: false });
     return;
   }
   if (mode === 'title') {
@@ -134,7 +143,11 @@ function updatePreviewBackground() {
   const isSticker = gallerySticker || state.quickGenerator === 'location' || state.quickGenerator === 'title' || state.quickGenerator === 'body';
   const visibleColor = gallerySticker ? image.galleryColor : pill ? pill.color : text && text.color;
   const isBlack = (visibleColor || '').toLowerCase() === brandColor('dark');
-  document.getElementById('canvasArea').classList.toggle('light-preview', isSticker && isBlack);
+  const galleryData = state.quickGenerator === 'gallery' && image ? galleryItem(image.galleryKey, image.itemKey) : null;
+  const area = document.getElementById('canvasArea');
+  area.classList.toggle('light-preview', (isSticker && isBlack) || !!(galleryData && galleryData.lightPreview));
+  // el logo de AJT se ve sobre el fondo de la combinación elegida (manual de marca)
+  area.style.background = state.quickGenerator === 'logoAjt' && image ? ajtColor(ajtVariant(image.ajtVariant).bg) : '';
 }
 
 // Se llama en cada tecla / paso de slider: varias llamadas dentro del mismo
@@ -145,6 +158,7 @@ function refreshCanvas() {
   refreshCanvasFrame = requestAnimationFrame(async () => {
     refreshCanvasFrame = null;
     await ensureFontsFor(getState);
+    if (getState().quickGenerator === 'logoAjt') await ensureAjtLogoAssets();
     regenerateQuick();
     updatePreviewBackground();
     await renderer.render();
@@ -190,6 +204,23 @@ async function downloadGalleryAll(gallery, hex) {
   }
 }
 
+// Descarga del logo de AJT: ajustado al logo, o centrado en un lienzo cuadrado
+// transparente (como el resto de stickers, para Instagram)
+async function downloadAjtLogo(square) {
+  try {
+    const img = getState().layers.find((l) => l.type === 'image');
+    await ensureAjtLogoAssets();
+    const { canvas } = drawAjtLogo(img);
+    let url = canvas.toDataURL('image/png');
+    if (square) url = await padStickerToSquare(url);
+    const name = (img.ajtText || 'logo').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'logo';
+    downloadBlob(dataURLToBlob(url), `ajt-${name}-${img.ajtLayout}-${img.ajtVariant}${square ? '-cuadrado' : ''}.png`);
+  } catch (err) {
+    console.error('Error descargando el logo', err);
+    alert('No se ha podido descargar el logo. Vuelve a intentarlo.');
+  }
+}
+
 function refreshProps() {
   const state = getState();
   if (state.quickGenerator === 'gallery') {
@@ -204,6 +235,17 @@ function refreshProps() {
       onColor: (hex) => { updateLayer(img.id, { galleryColor: hex }); refreshAll(); },
       onDownload: () => downloadGalleryItem(galleryItem(img.galleryKey, getLayerItemKey()), img.galleryColor || null),
       onDownloadAll: () => downloadGalleryAll(gallery, img.galleryColor || null),
+    });
+    return;
+  }
+  if (state.quickGenerator === 'logoAjt') {
+    const img = state.layers.find((l) => l.type === 'image');
+    if (!img) return;
+    renderAjtLogoPanel(propsContentEl, {
+      logo: img,
+      onChange: (patch) => { updateLayer(img.id, patch); refreshCanvas(); },
+      onDownload: () => downloadAjtLogo(false),
+      onDownloadSquare: () => downloadAjtLogo(true),
     });
     return;
   }
@@ -240,6 +282,7 @@ async function refreshAll() {
   refreshLayers();
   refreshProps();
   await ensureFontsFor(getState);
+  if (getState().quickGenerator === 'logoAjt') await ensureAjtLogoAssets();
   regenerateQuick();
   updatePreviewBackground();
   await renderer.render();
@@ -361,7 +404,10 @@ function saveCurrentWorkspace() {
   // las galerías de stickers no guardan nada (son visores): se abren siempre limpias
   if (getState().quickGenerator === 'gallery') return;
   // se anota la marca para traducir los colores si se abre con otra distinta
-  workspaces.set(currentTemplateId, { ...serializeDocument(), brand: getFontSetKey() });
+  const doc = serializeDocument();
+  // el logo de AJT se redibuja desde sus ajustes: no se guarda el PNG (pesa)
+  if (doc.quickGenerator === 'logoAjt') doc.layers = doc.layers.map((l) => (l.type === 'image' ? { ...l, src: null } : l));
+  workspaces.set(currentTemplateId, { ...doc, brand: getFontSetKey() });
 }
 
 // Colores del documento traducidos de la marca en que se guardó a la activa
@@ -480,7 +526,7 @@ function readImageScaled(file) {
 // sticker muy alargados y ajustados al texto (pasaba igual desde Photoshop).
 // Con una caja transparente más grande alrededor sí la respeta, así que los
 // stickers se exportan centrados en un lienzo cuadrado transparente.
-const STICKER_MODES = ['title', 'body', 'location'];
+const STICKER_MODES = ['title', 'body', 'location', 'logoAjt'];
 function padStickerToSquare(dataURL) {
   return new Promise((resolve, reject) => {
     const img = new Image();

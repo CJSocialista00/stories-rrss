@@ -1,9 +1,10 @@
 import { BUILTIN_TEMPLATES } from './builtins.js';
-import { STICKER_TEMPLATES, PHOTO_TEMPLATES, HUELGA_TEMPLATES } from './stickers.js';
+import { STICKER_TEMPLATES, PHOTO_TEMPLATES, HUELGA_TEMPLATES, LOGO_TEMPLATES } from './stickers.js';
 
 const ALL_BUILTINS = [
   ...BUILTIN_TEMPLATES.map((t) => ({ ...t, category: 'Stories' })),
   ...STICKER_TEMPLATES,
+  ...LOGO_TEMPLATES,
   ...HUELGA_TEMPLATES,
   ...PHOTO_TEMPLATES,
 ];

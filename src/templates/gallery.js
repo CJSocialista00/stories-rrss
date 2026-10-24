@@ -13,6 +13,26 @@ export const GALLERIES = {
       { key: 'largo', label: 'Versión larga', src: './assets/stickers/militar/quieres-militar-largo.png', width: 589, height: 1229 },
     ],
   },
+  logosCjs: {
+    title: 'Logotipo CJS',
+    zipName: 'logotipo_cjs.zip',
+    items: [
+      { key: 'blanco', label: 'Todo blanco', src: './assets/logos/cjs/cjs-blanco.png', width: 1380, height: 392 },
+      { key: 'negro', label: 'Negro claro', src: './assets/logos/cjs/cjs-negro.png', width: 1380, height: 392, lightPreview: true },
+      { key: 'rojo', label: 'Todo rojo', src: './assets/logos/cjs/cjs-rojo.png', width: 1380, height: 392 },
+      { key: 'blanco-triangulo-rojo', label: 'Blanco · triángulo rojo', src: './assets/logos/cjs/cjs-blanco-triangulo-rojo.png', width: 1380, height: 392 },
+      { key: 'negro-triangulo-rojo', label: 'Negro claro · triángulo rojo', src: './assets/logos/cjs/cjs-negro-triangulo-rojo.png', width: 1380, height: 392, lightPreview: true },
+    ],
+  },
+  logosOes: {
+    title: 'Logotipo OES',
+    zipName: 'logotipo_oes.zip',
+    items: [
+      { key: 'rojo', label: 'Rojo', src: './assets/logos/oes/oes-rojo.png', width: 1996, height: 880 },
+      { key: 'blanco', label: 'Blanco', src: './assets/logos/oes/oes-blanco.png', width: 1996, height: 880 },
+      { key: 'negro', label: 'Negro', src: './assets/logos/oes/oes-negro.png', width: 1996, height: 880, lightPreview: true },
+    ],
+  },
   // recolor: true = sticker de un solo color que se puede descargar en los
   // colores de cada marca (ver lib/recolor.js)
   huelga11n: {

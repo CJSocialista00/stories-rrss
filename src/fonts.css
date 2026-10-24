@@ -117,5 +117,8 @@
 @font-face { font-family: 'OES Mozilla Text'; src: url('../assets/fonts/oes/mozilla-text-700-normal.woff') format('woff'); font-weight: 700; font-style: normal; font-display: block; }
 @font-face { font-family: 'OES Mozilla Text'; src: url('../assets/fonts/oes/mozilla-text-700-italic.woff') format('woff'); font-weight: 700; font-style: italic; font-display: block; }
 @font-face { font-family: 'OES Clandy'; src: url('../assets/fonts/oes/clandy-400-italic.woff') format('woff'); font-weight: 400; font-style: italic; font-display: block; }
+@font-face { font-family: 'AJT Open Sauce Sans'; src: url('../assets/fonts/ajt/open-sauce-sans-400-normal.woff') format('woff'); font-weight: 400; font-style: normal; font-display: block; }
+@font-face { font-family: 'AJT Open Sauce Sans'; src: url('../assets/fonts/ajt/open-sauce-sans-500-normal.woff') format('woff'); font-weight: 500; font-style: normal; font-display: block; }
+@font-face { font-family: 'AJT Open Sauce Sans'; src: url('../assets/fonts/ajt/open-sauce-sans-700-normal.woff') format('woff'); font-weight: 700; font-style: normal; font-display: block; }
 @font-face { font-family: 'AJT PP Playground'; src: url('../assets/fonts/ajt/pp-playground-500-normal.woff') format('woff'); font-weight: 500; font-style: normal; font-display: block; }
 @font-face { font-family: 'AJT PP Playground'; src: url('../assets/fonts/ajt/pp-playground-500-italic.woff') format('woff'); font-weight: 500; font-style: italic; font-display: block; }

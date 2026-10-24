@@ -38,7 +38,7 @@ Cada juego de tipografía trae su paleta, y los botones de color (ubicación, te
 
 - **CJS**: blanco `#ffffff`, rojo `#f54949`, negro `#282929`.
 - **OES**: blanco `#ffffff`, rojo `#ff4331`, negro `#000000`, turquesa `#1adcc8`.
-- **AJT**: blanco `#ffffff`, rojo `#f42a39`, negro `#000000`, crema `#f3f3e9`.
+- **AJT**: blanco `#ffffff`, rojo `#ff002c`, negro `#000000`, crema `#f3f3e8` (los del manual de la línea gráfica).
 
 Al cambiar de marca, el diseño en curso traduce sus colores (rojo → rojo de la marca, blanco, negro); los colores sin pareja se quedan como están. Las paletas están en `src/engine/fontSets.js`.
 

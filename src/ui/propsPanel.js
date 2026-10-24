@@ -3,6 +3,7 @@ import { ARTICLE_SUBTITLE_GAP } from '../templates/builtins.js';
 import { COLORS, ASPECT_PRESETS, CANVAS_W, CANVAS_H, FONT_WIDTH_VARIANTS, FONT_WEIGHT_VARIANTS } from '../engine/constants.js';
 import { currentFontSet, brandColors } from '../engine/fontSets.js';
 import { recolorThumb } from '../lib/recolor.js';
+import { AJT_LOGO_VARIANTS, AJT_LOGO_LAYOUTS, ajtColor } from '../templates/ajtLogo.js';
 import { LOGO_KINDS, logoKindOf, PIN_VARIANTS } from '../engine/stageRenderer.js';
 
 function row(labelText, inputEl) {
@@ -201,6 +202,61 @@ export function renderGalleryPanel(container, { gallery, currentKey, color, onSe
     all.addEventListener('click', onDownloadAll);
     g.appendChild(all);
   }
+  container.appendChild(g);
+}
+
+// Panel del logo editable de AJT: nombre de la ubicación, composición y
+// combinación de colores permitida según el fondo.
+export function renderAjtLogoPanel(container, { logo, onChange, onDownload, onDownloadSquare }) {
+  container.innerHTML = '';
+  const g = document.createElement('div');
+  g.className = 'prop-group';
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.value = logo.ajtText || '';
+  input.placeholder = 'Nombre de la ubicación';
+  input.maxLength = 40;
+  input.addEventListener('input', () => onChange({ ajtText: input.value }));
+  g.appendChild(row('Ubicación', input));
+
+  const options = (list, current, key, swatch) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'toggle-row wrap';
+    list.forEach((o) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = o.label;
+      if (o.key === current) b.classList.add('active');
+      if (swatch) { b.style.borderLeftColor = ajtColor(o.bg); b.classList.add('swatch'); }
+      // pointerdown: en el móvil el primer toque cierra el teclado y el click se perdía
+      b.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+        onChange({ [key]: o.key });
+        renderAjtLogoPanel(container, { logo: { ...logo, [key]: o.key }, onChange, onDownload, onDownloadSquare });
+      });
+      wrap.appendChild(b);
+    });
+    return wrap;
+  };
+  g.appendChild(row('Composición', options(AJT_LOGO_LAYOUTS, logo.ajtLayout, 'ajtLayout')));
+  g.appendChild(row('Colores', options(AJT_LOGO_VARIANTS, logo.ajtVariant, 'ajtVariant', true)));
+
+  const dl = document.createElement('button');
+  dl.type = 'button';
+  dl.className = 'btn';
+  dl.style.cssText = 'width:100%;margin-top:12px';
+  dl.textContent = '⬇ Descargar logo (PNG)';
+  dl.addEventListener('click', onDownload);
+  g.appendChild(dl);
+  const sq = document.createElement('button');
+  sq.type = 'button';
+  sq.className = 'btn';
+  sq.style.cssText = 'width:100%;margin-top:8px';
+  sq.textContent = '⬇ Para Instagram (cuadrado)';
+  sq.addEventListener('click', onDownloadSquare);
+  g.appendChild(sq);
   container.appendChild(g);
 }
 
