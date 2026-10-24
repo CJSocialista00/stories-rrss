@@ -5,6 +5,7 @@ import { makeTextLayer, makeImageLayer, makeLogoLayer, makePinLayer, makeFrameLa
 import { listTemplates, loadTemplateDoc, saveAsNewTemplate, deleteTemplate } from './templates/store.js';
 import { renderLayerList } from './ui/layerList.js';
 import { renderProps, renderQuickPanel, renderGalleryPanel, renderAjtLogoPanel } from './ui/propsPanel.js';
+import { initHome } from './ui/home.js';
 import { drawAjtLogo, ensureAjtLogoAssets, ajtVariant, ajtColor } from './templates/ajtLogo.js';
 import { GALLERIES, galleryItem, galleryFileName, galleryColorFileName } from './templates/gallery.js';
 import { recolorBlob } from './lib/recolor.js';
@@ -26,6 +27,7 @@ const bottomSheet = document.getElementById('bottomSheet');
 let pendingImageLayerId = null;
 let renderer;
 let currentTemplateId = null;
+let home;
 
 async function waitFonts() {
   // solo el rótulo del juego de tipografía activo (en CJS, ExtraCondensed
@@ -304,6 +306,22 @@ function closeDrawer() { templatesDrawer.classList.add('hidden'); }
 
 // Juego de tipografía (CJS / OES / AJT): cambia solo la letra de todas las
 // plantillas; textos, colores y composición se quedan como están.
+async function changeBrand(key) {
+  if (key === getFontSetKey()) return;
+  const previous = getFontSetKey();
+  setFontSetKey(key);
+  // el diseño en curso pasa a los colores de la nueva marca (rojo → rojo
+  // de la marca, blanco, negro); el resto de plantillas lo hace al abrirse
+  getState().layers.slice().forEach((l) => {
+    const patch = recolorPatch(l, previous, key);
+    if (patch) updateLayer(l.id, patch, { history: false });
+  });
+  saveCurrentWorkspace();
+  persistWorkspaces();
+  populateFontSetPicker();
+  await refreshAll();
+}
+
 function populateFontSetPicker() {
   const picker = document.getElementById('fontSetPicker');
   picker.innerHTML = '';
@@ -311,21 +329,7 @@ function populateFontSetPicker() {
     const btn = document.createElement('button');
     btn.className = 'fontset-btn' + (set.key === getFontSetKey() ? ' active' : '');
     btn.innerHTML = `<strong>${set.label}</strong><span>${set.detail}</span>`;
-    btn.addEventListener('click', async () => {
-      if (set.key === getFontSetKey()) return;
-      const previous = getFontSetKey();
-      setFontSetKey(set.key);
-      // el diseño en curso pasa a los colores de la nueva marca (rojo → rojo
-      // de la marca, blanco, negro); el resto de plantillas lo hace al abrirse
-      getState().layers.slice().forEach((l) => {
-        const patch = recolorPatch(l, previous, set.key);
-        if (patch) updateLayer(l.id, patch, { history: false });
-      });
-      saveCurrentWorkspace();
-      persistWorkspaces();
-      populateFontSetPicker();
-      await refreshAll();
-    });
+    btn.addEventListener('click', () => changeBrand(set.key));
     picker.appendChild(btn);
   });
 }
@@ -464,9 +468,19 @@ async function applyTemplate(id, { fresh = false } = {}) {
   // en los generadores rápidos no hay capas que navegar: directo al panel
   // único, sin pestañas de Capas/Añadir de por medio
   bottomSheet.classList.toggle('quick-mode', !!doc.quickGenerator);
+  updateExportButton();
   await refreshAll();
   fitStage(); // cada plantilla puede tener un tamaño de lienzo distinto
   if (doc.quickGenerator) { openSheet(); switchTab('props'); }
+}
+
+// En los generadores rápidos (stickers, logos) el botón principal descarga
+// directamente: un toque, sin menú. En las stories mantiene el menú Exportar.
+function updateExportButton() {
+  const btn = document.getElementById('btnExport');
+  const quick = !!getState().quickGenerator;
+  btn.textContent = quick ? '⬇ Descargar' : 'Exportar ▾';
+  btn.setAttribute('aria-label', quick ? 'Descargar PNG' : 'Exportar');
 }
 
 const canvasAreaEl = document.getElementById('canvasArea');
@@ -606,6 +620,26 @@ async function init() {
   });
 
   // topbar
+  home = initHome({
+    root: document.getElementById('homeScreen'),
+    getBrand: getFontSetKey,
+    onBrand: changeBrand,
+    onOpen: async (id) => { home.hide(); await applyTemplate(id); },
+    onOpenAll: () => { home.hide(); openDrawer(); },
+    getLast: () => {
+      try {
+        const id = localStorage.getItem(LAST_TEMPLATE_KEY);
+        const t = id && listTemplates().find((x) => x.id === id);
+        return t ? { id: t.id, name: t.name } : null;
+      } catch { return null; }
+    },
+  });
+  document.getElementById('btnHome').addEventListener('click', () => home.show());
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (home.isOpen()) home.hide();
+    else if (!templatesDrawer.classList.contains('hidden')) closeDrawer();
+  });
   document.getElementById('btnTemplatesMenu').addEventListener('click', openDrawer);
   document.getElementById('btnCloseTemplates').addEventListener('click', closeDrawer);
   templatesDrawer.addEventListener('click', (e) => { if (e.target === templatesDrawer) closeDrawer(); });
@@ -630,6 +664,13 @@ async function init() {
   }
 
   btnExportEl.addEventListener('click', () => {
+    const st = getState();
+    if (st.quickGenerator === 'gallery') {
+      const g = st.layers.find((l) => l.type === 'image');
+      downloadGalleryItem(galleryItem(g.galleryKey, g.itemKey), g.galleryColor || null);
+      return;
+    }
+    if (st.quickGenerator) { document.getElementById('btnExportSingle').click(); return; }
     const willOpen = exportMenu.classList.contains('hidden');
     if (willOpen) positionExportMenu();
     exportMenu.classList.toggle('hidden');
@@ -737,6 +778,7 @@ async function init() {
       alert('No se ha podido cargar la imagen.');
     });
   });
+  home.show(); // al abrir la app: elegir qué hacer (la plantilla anterior queda detrás)
 }
 
 init();

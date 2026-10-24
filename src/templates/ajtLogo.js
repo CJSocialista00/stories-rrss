@@ -24,7 +24,7 @@ const LAYOUTS = {
   // ubicación · icono · texto, en una línea
   h: {
     label: 'Horizontal',
-    locSize: 378.2, subSize: 270.2, subLeading: 315.2, subWeight: 400, // en el PSD, Regular
+    locSize: 378.2, subSize: 270.2, subLeading: 315.2, subWeight: 500, // Medium (indicación del usuario)
     iconScale: 578 / ICON_W, iconY: 109,
     gapLocIcon: 433, gapIconText: 435,
     locBaseline: 411, subBaseline: 210, height: 579,
