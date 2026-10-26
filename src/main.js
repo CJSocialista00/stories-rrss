@@ -53,7 +53,7 @@ function regenerateQuick() {
     const item = img && galleryItem(img.galleryKey, img.itemKey);
     if (!item) return;
     setCanvasSize(item.width, item.height);
-    updateLayer(img.id, { src: item.src, x: 0, y: 0, width: item.width, height: item.height, fit: 'contain', locked: true, tint: item.recolor ? img.galleryColor || null : null }, { history: false });
+    updateLayer(img.id, { src: item.src, x: 0, y: 0, width: item.width, height: item.height, fit: 'contain', locked: true, tint: item.recolor ? img.galleryColor || null : null, tintDuotone: !!item.duotone }, { history: false });
     return;
   }
   if (mode === 'logoAjt') {
@@ -179,7 +179,7 @@ function getLayerItemKey() {
 // Archivo del sticker: el original, o recoloreado a tamaño completo si es de
 // un solo color y se ha elegido un color de marca
 async function galleryFileData(item, hex) {
-  if (item.recolor && hex) return { name: galleryColorFileName(item, hex), blob: await recolorBlob(item.src, hex) };
+  if (item.recolor && hex) return { name: galleryColorFileName(item, hex), blob: await recolorBlob(item.src, hex, item.duotone) };
   const res = await fetch(item.src);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return { name: galleryFileName(item), blob: await res.blob() };

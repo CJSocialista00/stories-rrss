@@ -5,6 +5,7 @@ import { layoutMixedTitle, fitMixedTitle, drawMixedTitle } from './mixedTitle.js
 import { fitTextToBox } from './textFit.js';
 import { layoutRichText, fitRichText, bodyWeights } from './richText.js';
 import { ensureFontsFor } from './fonts.js';
+import { tintCanvas } from '../lib/recolor.js';
 
 const imageCache = new Map();
 function loadImage(src) {
@@ -22,21 +23,10 @@ function loadImage(src) {
 }
 
 const tintCache = new Map();
-function tintedPin(src, color) {
-  const key = `${src}|${color}`;
+function tintedPin(src, color, duotone = false) {
+  const key = `${src}|${color}|${duotone}`;
   if (tintCache.has(key)) return tintCache.get(key);
-  const p = loadImage(src).then((img) => {
-    if (!img) return null;
-    const c = document.createElement('canvas');
-    c.width = img.naturalWidth || img.width;
-    c.height = img.naturalHeight || img.height;
-    const ctx = c.getContext('2d');
-    ctx.drawImage(img, 0, 0);
-    ctx.globalCompositeOperation = 'source-in';
-    ctx.fillStyle = color;
-    ctx.fillRect(0, 0, c.width, c.height);
-    return c;
-  });
+  const p = loadImage(src).then((img) => (img ? tintCanvas(img, color, 1, duotone) : null));
   if (tintCache.size > 12) tintCache.clear(); // los stickers grandes pesan decenas de MB
   tintCache.set(key, p);
   return p;
@@ -469,8 +459,8 @@ export class StageRenderer {
 
   // ---- IMAGE ----
   // una imagen con "tint" (sticker de la galería en un color de marca) se pinta de ese color
-  imageKey(d) { return d.tint && d.src ? `${d.src}|tint:${d.tint}` : d.src; }
-  loadImageFor(d) { return d.tint && d.src ? tintedPin(d.src, d.tint) : loadImage(d.src); }
+  imageKey(d) { return d.tint && d.src ? `${d.src}|tint:${d.tint}|${d.tintDuotone ? 1 : 0}` : d.src; }
+  loadImageFor(d) { return d.tint && d.src ? tintedPin(d.src, d.tint, d.tintDuotone) : loadImage(d.src); }
   async createImageNode(d) {
     const img = await this.loadImageFor(d);
     const group = new window.Konva.Group({

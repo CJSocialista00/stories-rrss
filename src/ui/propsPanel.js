@@ -145,7 +145,7 @@ export function renderGalleryPanel(container, { gallery, currentKey, color, onSe
     img.src = item.src;
     img.alt = item.label;
     // miniatura en el color elegido (solo los de un color; el fondo no se tiñe)
-    if (item.recolor && color) recolorThumb(item.src, color).then((url) => { img.src = url; }).catch(() => {});
+    if (item.recolor && color) recolorThumb(item.src, color, 300, item.duotone).then((url) => { img.src = url; }).catch(() => {});
     const label = document.createElement('span');
     label.textContent = item.label;
     b.appendChild(img);

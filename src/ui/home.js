@@ -48,7 +48,7 @@ const MENU = [
       {
         title: 'Temáticos', hint: 'Campañas y movilizaciones', icon: 'flag',
         children: [
-          { title: 'Huelga General 11N', hint: '4 stickers y fondo vertical', icon: 'flag', id: 'sticker_huelga_huelga-general' },
+          { title: 'Huelga General 11N', hint: '5 stickers y fondo vertical', icon: 'flag', id: 'sticker_huelga_huelga-general' },
         ],
       },
     ],

@@ -45,6 +45,7 @@ export const GALLERIES = {
     zipName: 'stickers_huelga_general_11n.zip',
     items: [
       { key: 'huelga-general', label: 'Huelga General!', src: './assets/stickers/huelga11n/huelga-general.png', width: 792, height: 788, recolor: true },
+      { key: 'unete', label: 'Únete! Comités juveniles', src: './assets/stickers/huelga11n/unete.png', width: 965, height: 766, recolor: true, duotone: true },
       { key: '11n-rentismo', label: '11N · Contra el rentismo', src: './assets/stickers/huelga11n/11n-contra-el-rentismo.png', width: 5610, height: 1019, recolor: true },
       { key: 'contra-rentismo', label: 'Contra el rentismo, gobierno y capital', src: './assets/stickers/huelga11n/contra-el-rentismo-gobierno-capital.png', width: 2452, height: 1574, recolor: true },
       { key: 'fondo-vertical', label: 'FONDO VERTICAL 9:16', src: './assets/stickers/huelga11n/fondo-vertical.png', width: 1080, height: 1980, recolor: false },
